@@ -17,10 +17,9 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-    console.log("Bir kullanıcı bağlandı");
 
-    socket.on("sendMessage", (msg) => {
-        io.emit("newMessage", msg);
+    socket.on("sendMessage", (data) => {
+        io.emit("newMessage", data);
     });
 
     socket.on("disconnect", () => {
@@ -28,7 +27,7 @@ io.on("connection", (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log("Sunucu çalışıyor. Port:", PORT);
 });
