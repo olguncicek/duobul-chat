@@ -6,65 +6,69 @@ const { Server } = require("socket.io");
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
-  },
+    origin: "*"
+  }
 });
 
+// public klasörü
 app.use(express.static(__dirname + "/public"));
 
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public/duo.html");
 });
 
-// TR saatini düzgün almak için (UTC değil Europe/Istanbul)
-function getTurkeyTime() {
-  return new Date().toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Europe/Istanbul",
-  });
-}
+// username -> aktif socket sayısı
+const users = new Map();
 
 io.on("connection", (socket) => {
-  console.log("Bir kullanıcı bağlandı:", socket.id);
-
-  let currentUser = null;
+  console.log("Bir kullanıcı bağlandı");
+  let username = null;
 
   // Kullanıcı adını al
-  socket.on("set_username", (username) => {
-    currentUser = username;
-    console.log(`Kullanıcı bağlandı: ${username} (${socket.id})`);
+  socket.on("setUsername", (name) => {
+    if (!name) return;
+    username = name.trim();
+    if (!username) return;
 
-    // Sisteme bağlandı mesajı
-    io.emit("user_status", {
-      user: username,
-      status: "online",
-      time: getTurkeyTime(),
-    });
+    const count = users.get(username) || 0;
+    users.set(username, count + 1);
+
+    // Bu kullanıcı çevrimiçi
+    io.emit("userStatus", { username, online: true });
   });
 
-  // Mesaj gönderme (saat client'tan geliyor!)
-  socket.on("sendMessage", (msg) => {
-    // msg = { user, text, time }
-    io.emit("chat_message", msg);
+  // Mesaj gönder
+  socket.on("sendMessage", (data) => {
+    if (!username) return;
+    const { text, time } = data;
+    if (!text || !time) return;
+
+    const msg = {
+      username,
+      text,
+      time
+    };
+
+    io.emit("newMessage", msg);
   });
 
+  // Bağlantı koptuğunda
   socket.on("disconnect", () => {
-    if (currentUser) {
-      console.log(`Kullanıcı ayrıldı: ${currentUser} (${socket.id})`);
-      io.emit("user_status", {
-        user: currentUser,
-        status: "offline",
-        time: getTurkeyTime(),
-      });
+    console.log("Bir kullanıcı ayrıldı");
+    if (!username) return;
+
+    const count = users.get(username) || 0;
+    if (count <= 1) {
+      users.delete(username);
+      // Bu kullanıcı tamamen çıktı → offline
+      io.emit("userStatus", { username, online: false });
     } else {
-      console.log("İsimsiz bir kullanıcı ayrıldı:", socket.id);
+      users.set(username, count - 1);
     }
   });
 });
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log("Sunucu çalışıyor. Port:", PORT);
 });
