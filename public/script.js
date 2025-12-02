@@ -1,26 +1,14 @@
 const socket = io();
 
-let username = localStorage.getItem("username");
+let username = "";
 
-const usernameModal = document.getElementById("usernameModal");
-const usernameInput = document.getElementById("usernameInput");
-const saveUsername = document.getElementById("saveUsername");
+function saveUsername() {
+    const input = document.getElementById("usernameInput");
+    if (input.value.trim() === "") return;
 
-if (!username) {
-    usernameModal.style.display = "flex";
-} else {
-    usernameModal.style.display = "none";
+    username = input.value.trim();
+    document.getElementById("usernamePopup").style.display = "none";
 }
-
-saveUsername.addEventListener("click", () => {
-    const name = usernameInput.value.trim();
-    if (name.length < 2) return alert("Kullanıcı adı çok kısa!");
-
-    username = name;
-    localStorage.setItem("username", username);
-
-    usernameModal.style.display = "none";
-});
 
 const input = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
@@ -32,14 +20,18 @@ input.addEventListener("keypress", (e) => {
 });
 
 function sendMessage() {
+    if (!username) return alert("Lütfen önce isminizi girin.");
+
     const msg = input.value.trim();
-    if (!msg || !username) return;
+    if (!msg) return;
 
-    socket.emit("sendMessage", {
-        user: username,
-        text: msg
-    });
+    const data = {
+        name: username,
+        text: msg,
+        time: new Date().toLocaleTimeString().slice(0,5)
+    };
 
+    socket.emit("sendMessage", data);
     input.value = "";
 }
 
@@ -49,11 +41,14 @@ socket.on("newMessage", (data) => {
 
 function addMessage(data) {
     const li = document.createElement("li");
-    li.classList.add("message");
+
+    if (data.name === username) li.classList.add("message", "mine");
+    else li.classList.add("message");
 
     li.innerHTML = `
-        <p class="text"><strong>${data.user}:</strong> ${data.text}</p>
-        <span class="date">${new Date().toLocaleTimeString().slice(0,5)}</span>
+        <div class="name">${data.name}</div>
+        <p class="text">${data.text}</p>
+        <div class="date">${data.time}</div>
     `;
 
     messagesUl.appendChild(li);
