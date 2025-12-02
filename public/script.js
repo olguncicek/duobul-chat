@@ -1,129 +1,119 @@
 const socket = io();
 
-const loginScreen = document.getElementById("login-screen");
-const loginForm = document.getElementById("login-form");
-const usernameInput = document.getElementById("username-input");
+const loginModal = document.getElementById("loginModal");
+const usernameInput = document.getElementById("usernameInput");
+const loginBtn = document.getElementById("loginBtn");
+const chatContainer = document.getElementById("chatContainer");
 
-const chatContainer = document.getElementById("chat-container");
-const messagesUl = document.getElementById("messages");
 const msgInput = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
+const messagesUl = document.querySelector(".messages");
 
-let username = null;
+let myUsername = "";
+const userStatusMap = {}; // username -> "online" / "offline"
 
-// TR saatini doğru göstermek için (hem client hem server aynı format)
-function getTurkeyTime() {
-  const now = new Date();
-  return now.toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Europe/Istanbul",
-  });
-}
+/* ---------- GİRİŞ / KULLANICI ADI ---------- */
 
-// Basit XSS koruması
-function escapeHTML(str) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-/* ========= GİRİŞ ========= */
-
-loginForm.addEventListener("submit", (e) => {
-  e.preventDefault();
+function doLogin() {
   const name = usernameInput.value.trim();
   if (!name) return;
-  username = name;
+  myUsername = name;
+  socket.emit("setUsername", myUsername);
 
-  // Sunucuya kullanıcı adını bildir
-  socket.emit("set_username", username);
-
-  // Giriş ekranını kaldır, sohbeti göster
-  loginScreen.style.display = "none";
-  chatContainer.style.display = "flex";
-
+  loginModal.classList.add("hidden");
+  chatContainer.classList.remove("blur");
   msgInput.focus();
+}
+
+loginBtn.addEventListener("click", doLogin);
+usernameInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") doLogin();
 });
 
-/* ========= MESAJ GÖNDERME ========= */
+/* ---------- MESAJ GÖNDERME ---------- */
 
 function sendMessage() {
   const text = msgInput.value.trim();
-  if (!text || !username) return;
+  if (!text || !myUsername) return;
 
-  const message = {
-    user: username,
-    text,
-    time: getTurkeyTime(), // saat client'tan
-  };
+  // SAATİ HERKİSİN BİLGİSAYARINDA YEREL OLARAK HESAPLA
+  const time = new Date().toLocaleTimeString("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  });
 
-  socket.emit("sendMessage", message);
+  socket.emit("sendMessage", { text, time });
   msgInput.value = "";
-  msgInput.focus();
 }
 
 sendBtn.addEventListener("click", sendMessage);
-
 msgInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") {
-    sendMessage();
-  }
+  if (e.key === "Enter") sendMessage();
 });
 
-/* ========= MESAJ ALMA ========= */
+/* ---------- MESAJ ALMA ---------- */
 
-socket.on("chat_message", (msg) => {
-  addMessage(msg);
+socket.on("newMessage", (data) => {
+  const { username, text, time } = data;
+  addMessage(username, text, time);
 });
 
-socket.on("user_status", (data) => {
-  addStatusMessage(data);
-});
-
-/* ========= EKRANA BASMA ========= */
-
-function addMessage(msg) {
+function addMessage(username, text, time) {
   const li = document.createElement("li");
   li.classList.add("message");
-  if (msg.user === username) {
+  if (username === myUsername) {
     li.classList.add("mine");
   }
+  li.dataset.username = username;
 
-  li.innerHTML = `
-    <div class="message-header">
-      <div class="message-user">
-        <span class="status-dot online"></span>
-        <span>${escapeHTML(msg.user)}</span>
-      </div>
-      <span class="message-time">${msg.time}</span>
-    </div>
-    <div class="message-text">${escapeHTML(msg.text)}</div>
-  `;
+  const header = document.createElement("div");
+  header.classList.add("message-header");
 
-  messagesUl.appendChild(li);
-  messagesUl.scrollTop = messagesUl.scrollHeight;
-}
+  const dot = document.createElement("span");
+  dot.classList.add("status-dot");
+  // Kullanıcının son bilinen durumuna göre renk
+  if (userStatusMap[username] === "offline") {
+    dot.classList.add("offline");
+  }
 
-function addStatusMessage(data) {
-  const { user, status, time } = data;
+  const sender = document.createElement("span");
+  sender.classList.add("sender");
+  sender.textContent = username;
 
-  const li = document.createElement("li");
-  li.classList.add("status-message");
+  const date = document.createElement("span");
+  date.classList.add("date");
+  date.textContent = time;
 
-  const statusText =
-    status === "online"
-      ? `${user} sohbet odasına katıldı`
-      : `${user} sohbetten ayrıldı`;
+  header.appendChild(dot);
+  header.appendChild(sender);
+  header.appendChild(date);
 
-  li.innerHTML = `
-    <span class="status-dot ${status === "online" ? "online" : "offline"}"></span>
-    <span>${escapeHTML(statusText)}</span>
-    <span class="message-time">${time}</span>
-  `;
+  const textP = document.createElement("p");
+  textP.classList.add("text");
+  textP.textContent = text;
+
+  li.appendChild(header);
+  li.appendChild(textP);
 
   messagesUl.appendChild(li);
   messagesUl.scrollTop = messagesUl.scrollHeight;
 }
+
+/* ---------- ONLINE / OFFLINE NOKTA RENKLERİ ---------- */
+
+socket.on("userStatus", ({ username, online }) => {
+  userStatusMap[username] = online ? "online" : "offline";
+
+  const dots = document.querySelectorAll(
+    `li.message[data-username="${username}"] .status-dot`
+  );
+
+  dots.forEach((dot) => {
+    if (online) {
+      dot.classList.remove("offline");
+    } else {
+      dot.classList.add("offline");
+    }
+  });
+});
