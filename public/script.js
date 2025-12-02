@@ -1,146 +1,127 @@
 const socket = io();
 
-const input = document.getElementById("msgInput");
-const sendBtn = document.getElementById("sendBtn");
-const messagesUl = document.querySelector(".messages");
+const loginScreen = document.getElementById("login-screen");
+const loginForm = document.getElementById("login-form");
+const usernameInput = document.getElementById("username-input");
 
-const usernameModal = document.getElementById("usernameModal");
-const usernameInput = document.getElementById("usernameInput");
-const usernameSaveBtn = document.getElementById("usernameSaveBtn");
+const chatContainer = document.getElementById("chat-container");
+const messagesUl = document.getElementById("messages");
+const msgInput = document.getElementById("msgInput");
+const sendBtn = document.getElementById("sendBtn");
 
 let username = null;
-const onlineUsers = {}; // { "Ali": true/false }
 
-// ====== KULLANICI ADI POPUP ======
-
-function openUsernameModal() {
-  usernameModal.style.display = "flex";
-  usernameInput.focus();
-}
-
-function closeUsernameModal() {
-  usernameModal.style.display = "none";
-}
-
-function saveUsername() {
-  const value = usernameInput.value.trim();
-  if (!value) return;
-  username = value;
-  closeUsernameModal();
-  socket.emit("join", username);
-}
-
-usernameSaveBtn.addEventListener("click", saveUsername);
-usernameInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") {
-    saveUsername();
-  }
-});
-
-// Sayfa açılır açılmaz popup aç
-openUsernameModal();
-
-// ====== SAAT FONKSİYONU (LOCAL ZAMAN) ======
-
-function getTimeString() {
+// TR saatini doğru göstermek için (hem client hem server aynı format)
+function getTurkeyTime() {
   const now = new Date();
-  const hours = now.getHours().toString().padStart(2, "0");
-  const minutes = now.getMinutes().toString().padStart(2, "0");
-  // 11.08 gibi
-  return `${hours}.${minutes}`;
+  return now.toLocaleTimeString("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Istanbul",
+  });
 }
 
-// HTML kaçışı (XSS'ye karşı basit önlem)
-function escapeHtml(text) {
-  return text
+// Basit XSS koruması
+function escapeHTML(str) {
+  return str
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/>/g, "&gt;");
 }
 
-// ====== MESAJ GÖNDERME ======
+/* ========= GİRİŞ ========= */
+
+loginForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = usernameInput.value.trim();
+  if (!name) return;
+  username = name;
+
+  // Sunucuya kullanıcı adını bildir
+  socket.emit("set_username", username);
+
+  // Giriş ekranını kaldır, sohbeti göster
+  loginScreen.style.display = "none";
+  chatContainer.style.display = "flex";
+
+  msgInput.focus();
+});
+
+/* ========= MESAJ GÖNDERME ========= */
 
 function sendMessage() {
-  if (!username) {
-    // isim seçilmeden mesaj gönderilmesin
-    openUsernameModal();
-    return;
-  }
+  const text = msgInput.value.trim();
+  if (!text || !username) return;
 
-  const msg = input.value.trim();
-  if (!msg) return;
-
-  const time = getTimeString();
-
-  const data = {
-    text: msg,
-    username,
-    time, // local saat
+  const message = {
+    user: username,
+    text,
+    time: getTurkeyTime(), // saat client'tan
   };
 
-  socket.emit("sendMessage", data);
-  input.value = "";
+  socket.emit("sendMessage", message);
+  msgInput.value = "";
+  msgInput.focus();
 }
 
 sendBtn.addEventListener("click", sendMessage);
-input.addEventListener("keypress", (e) => {
+
+msgInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") {
     sendMessage();
   }
 });
 
-// ====== ONLINE / OFFLINE DURUM GÜNCELLEME ======
+/* ========= MESAJ ALMA ========= */
 
-function updateUserStatusDots(changedUsername, isOnline) {
-  const allMessages = document.querySelectorAll("li.message");
-
-  allMessages.forEach((li) => {
-    if (li.dataset.username === changedUsername) {
-      const dot = li.querySelector(".status-dot");
-      if (!dot) return;
-      dot.classList.remove("online", "offline");
-      dot.classList.add(isOnline ? "online" : "offline");
-    }
-  });
-}
-
-socket.on("userStatus", (data) => {
-  onlineUsers[data.username] = data.online;
-  updateUserStatusDots(data.username, data.online);
-});
-
-// ====== MESAJ ALMA VE EKRANA BASMA ======
-
-socket.on("newMessage", (msg) => {
+socket.on("chat_message", (msg) => {
   addMessage(msg);
 });
+
+socket.on("user_status", (data) => {
+  addStatusMessage(data);
+});
+
+/* ========= EKRANA BASMA ========= */
 
 function addMessage(msg) {
   const li = document.createElement("li");
   li.classList.add("message");
-  li.dataset.username = msg.username;
-
-  // Benim mesajım mı?
-  if (msg.username === username) {
+  if (msg.user === username) {
     li.classList.add("mine");
   }
 
-  const isOnline =
-    typeof onlineUsers[msg.username] === "boolean"
-      ? onlineUsers[msg.username]
-      : true; // varsayılan çevrimiçi
-
   li.innerHTML = `
     <div class="message-header">
-      <span class="username">
-        <span class="status-dot ${isOnline ? "online" : "offline"}"></span>
-        ${escapeHtml(msg.username)}
-      </span>
-      <span class="date">${msg.time || ""}</span>
+      <div class="message-user">
+        <span class="status-dot online"></span>
+        <span>${escapeHTML(msg.user)}</span>
+      </div>
+      <span class="message-time">${msg.time}</span>
     </div>
-    <p class="text">${escapeHtml(msg.text)}</p>
+    <div class="message-text">${escapeHTML(msg.text)}</div>
+  `;
+
+  messagesUl.appendChild(li);
+  messagesUl.scrollTop = messagesUl.scrollHeight;
+}
+
+function addStatusMessage(data) {
+  const { user, status, time } = data;
+
+  const li = document.createElement("li");
+  li.classList.add("status-message");
+
+  const statusText =
+    status === "online"
+      ? `${user} sohbet odasına katıldı`
+      : `${user} sohbetten ayrıldı`;
+
+  li.innerHTML = `
+    <span class="status-dot ${status === "online" ? "online" : "offline"}"></span>
+    <span>${escapeHTML(statusText)}</span>
+    <span class="message-time">${time}</span>
   `;
 
   messagesUl.appendChild(li);
