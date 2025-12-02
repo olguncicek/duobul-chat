@@ -5,9 +5,7 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 
 const io = new Server(server, {
-    cors: {
-        origin: "*"
-    }
+    cors: { origin: "*" }
 });
 
 app.use(express.static(__dirname + "/public"));
@@ -17,6 +15,7 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
+    console.log("Bir kullanıcı bağlandı");
 
     socket.on("sendMessage", (data) => {
         io.emit("newMessage", data);
@@ -27,7 +26,6 @@ io.on("connection", (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => {
-    console.log("Sunucu çalışıyor. Port:", PORT);
+server.listen(process.env.PORT || 3000, () => {
+    console.log("Sunucu çalışıyor...");
 });
