@@ -8,19 +8,25 @@
 </head>
 <body>
 
-<div class="container">
+<div class="page">
 
-    <div class="username-box" id="usernameBox">
-        <h2>Kullanıcı Adı</h2>
-        <input type="text" id="usernameInput" placeholder="Adın...">
-        <button id="saveUsername">Kaydet</button>
+    <!-- Kullanıcı adı alanı -->
+    <div class="username-box">
+        <h2>Kullanıcı adın</h2>
+        <div class="username-input-row">
+            <input type="text" id="usernameInput" placeholder="Adını yaz...">
+            <button id="saveUsername">Kaydet</button>
+        </div>
+        <div class="username-info" id="usernameInfo"></div>
     </div>
 
-    <div class="chat-box" id="chatBox" style="display: none;">
+    <!-- Sohbet kutusu -->
+    <div class="container">
         <h2>Sohbet</h2>
-        <ul class="messages" id="messages"></ul>
 
-        <div class="input-area">
+        <ul class="messages"></ul>
+
+        <div class="input">
             <input type="text" id="msgInput" placeholder="Mesaj yaz...">
             <button id="sendBtn">➤</button>
         </div>
