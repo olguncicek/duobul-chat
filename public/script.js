@@ -2,55 +2,54 @@ const socket = io();
 
 let username = "";
 
-function saveUsername() {
-    const input = document.getElementById("usernameInput");
-    if (input.value.trim() === "") return;
+const usernameBox = document.getElementById("usernameBox");
+const chatBox = document.getElementById("chatBox");
 
-    username = input.value.trim();
-    document.getElementById("usernamePopup").style.display = "none";
-}
+const usernameInput = document.getElementById("usernameInput");
+const saveUsername = document.getElementById("saveUsername");
 
-const input = document.getElementById("msgInput");
+const messagesUl = document.getElementById("messages");
+const msgInput = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
-const messagesUl = document.querySelector(".messages");
+
+
+saveUsername.addEventListener("click", () => {
+    if (usernameInput.value.trim() === "") return;
+    username = usernameInput.value;
+
+    usernameBox.style.display = "none";
+    chatBox.style.display = "block";
+});
+
 
 sendBtn.addEventListener("click", sendMessage);
-input.addEventListener("keypress", (e) => {
+msgInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") sendMessage();
 });
 
 function sendMessage() {
-    if (!username) return alert("Lütfen önce isminizi girin.");
+    if (msgInput.value.trim() === "") return;
 
-    const msg = input.value.trim();
-    if (!msg) return;
+    socket.emit("sendMessage", {
+        user: username,
+        text: msgInput.value
+    });
 
-    const data = {
-        name: username,
-        text: msg,
-        time: new Date().toLocaleTimeString().slice(0,5)
-    };
-
-    socket.emit("sendMessage", data);
-    input.value = "";
+    msgInput.value = "";
 }
 
-socket.on("newMessage", (data) => {
-    addMessage(data);
-});
 
-function addMessage(data) {
+socket.on("newMessage", (data) => {
     const li = document.createElement("li");
 
-    if (data.name === username) li.classList.add("message", "mine");
-    else li.classList.add("message");
+    li.classList.add("msg");
+    if (data.user === username) li.classList.add("mine");
 
     li.innerHTML = `
-        <div class="name">${data.name}</div>
-        <p class="text">${data.text}</p>
-        <div class="date">${data.time}</div>
+        <div class="user">${data.user}</div>
+        <div class="text">${data.text}</div>
     `;
 
     messagesUl.appendChild(li);
     messagesUl.scrollTop = messagesUl.scrollHeight;
-}
+});
