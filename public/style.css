@@ -125,7 +125,7 @@ body {
 
 /* Sohbet kutusu */
 .chat-container {
-  width: 100%;           /* GENİŞLİK ARTTI */
+  width: 1500px;           /* GENİŞLİK ARTTI */
   /* max-width: 95vw; */
   height: 80vh;
   background: #10151c;
