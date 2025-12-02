@@ -3,7 +3,8 @@
   padding: 0;
   box-sizing: border-box;
   font-family: Arial, sans-serif;
-  
+  background: url("image/i.jpg") no-repeat center center fixed;
+    background-size: cover;
 }
 
 /* Arka plan */
@@ -13,9 +14,7 @@ body {
   align-items: center;
   justify-content: center;
   color: #fff;
-  background: url("image/i.jpg") no-repeat center center fixed;
-  background-size: cover;
-  height: 100vh;
+  
 }
 
 /* Bulanık efekt */
@@ -43,7 +42,6 @@ body {
   width: 360px;
   padding: 24px 28px 30px;
   border-radius: 18px;
-  background: #171b22;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
