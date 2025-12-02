@@ -30,10 +30,12 @@ msgInput.addEventListener("keypress", (e) => {
 function sendMessage() {
     if (msgInput.value.trim() === "") return;
 
-    socket.emit("sendMessage", {
-        user: username,
-        text: msgInput.value
-    });
+   socket.emit("sendMessage", {
+    user: username,
+    msg: msg,
+    time: Date.now()
+});
+
 
     msgInput.value = "";
 }
