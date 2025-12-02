@@ -5,35 +5,48 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 
 const io = new Server(server, {
-  cors: {
-    origin: "*"
-  }
+    cors: { origin: "*" }
 });
 
-// public klasörünü statik olarak sun
 app.use(express.static(__dirname + "/public"));
 
-// ana sayfa
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/duo.html");
+    res.sendFile(__dirname + "/public/duo.html");
 });
 
-// socket.io
+let onlineUsers = {};
+
 io.on("connection", (socket) => {
-  console.log("Bir kullanıcı bağlandı");
+    console.log("Bir kullanıcı bağlandı");
 
-  // client'tan mesaj gelince herkese gönder
-  socket.on("sendMessage", (data) => {
-    // data: { user, text, time }
-    io.emit("newMessage", data);
-  });
+    socket.on("setUsername", (username) => {
+        socket.username = username;
+        onlineUsers[socket.id] = username;
+        io.emit("onlineUsers", onlineUsers);
+    });
 
-  socket.on("disconnect", () => {
-    console.log("Bir kullanıcı ayrıldı");
-  });
+    socket.on("sendMessage", (msg) => {
+        io.emit("newMessage", {
+            user: socket.username,
+            text: msg,
+            time: new Date().toLocaleTimeString().slice(0, 5),
+            online: true
+        });
+    });
+
+    socket.on("disconnect", () => {
+        console.log("Bir kullanıcı ayrıldı");
+        delete onlineUsers[socket.id];
+
+        io.emit("onlineUsers", onlineUsers);
+
+        io.emit("userDisconnected", {
+            user: socket.username,
+            online: false
+        });
+    });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log("Sunucu çalışıyor. Port:", PORT);
+server.listen(process.env.PORT || 3000, () => {
+    console.log("Sunucu çalışıyor.");
 });
