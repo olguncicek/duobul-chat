@@ -1,68 +1,51 @@
 <!DOCTYPE html>
 <html lang="tr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-    <title>DuoBul Sohbet</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <!-- GİRİŞ EKRANI -->
-    <div id="login-screen" class="login-overlay">
-      <div class="login-card">
-        <div class="logo-area">
-          <div class="logo-circle"></div>
-          <div class="logo-texts">
-            <div class="logo-title">
-              <span class="logo-duo">Duo</span
-              ><span class="logo-bul">Bul</span>
-            </div>
-            <div class="logo-subtitle">Oyuncu Arkadaşını Bul</div>
-          </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DuoBul Sohbet</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Giriş ekranı -->
+  <div id="loginModal" class="login-modal">
+    <div class="login-card">
+      <div class="logo-area">
+        <div class="logo-circle"></div>
+        <div class="logo-texts">
+          <div class="logo-title">DuoBul</div>
+          <div class="logo-subtitle">OYUNCU ARKADAŞINI BUL</div>
         </div>
-
-        <p class="login-tagline">
-          Anında Bağlan, Hemen Oyna.
-        </p>
-
-        <form id="login-form" class="login-form">
-          <div class="input-wrapper">
-            <span class="input-icon">👤</span>
-            <input
-              type="text"
-              id="username-input"
-              placeholder="Kullanıcı adı gir..."
-              autocomplete="off"
-            />
-          </div>
-          <button type="submit" class="login-button">
-            Giriş Yap <span class="login-arrow">➤</span>
-          </button>
-        </form>
       </div>
-    </div>
+      <p class="login-tagline">Anında Bağlan, Hemen Oyna.</p>
 
-    <!-- SOHBET KISMI -->
-    <div class="container" id="chat-container">
-      <h2>Sohbet</h2>
-
-      <ul class="messages" id="messages"></ul>
-
-      <div class="input">
+      <div class="login-input-group">
         <input
           type="text"
-          id="msgInput"
-          placeholder="Mesaj yaz..."
-          autocomplete="off"
+          id="usernameInput"
+          placeholder="Kullanıcı Adı Gir..."
         />
-        <button id="sendBtn">➤</button>
       </div>
+      <button id="loginBtn" class="login-button">
+        Giriş Yap ✈
+      </button>
     </div>
+  </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="script.js"></script>
-  </body>
+  <!-- Sohbet kutusu -->
+  <div class="chat-container blur" id="chatContainer">
+    <h2>Sohbet</h2>
+
+    <ul class="messages"></ul>
+
+    <div class="input">
+      <input type="text" id="msgInput" placeholder="Mesaj yaz..." />
+      <button id="sendBtn">➤</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
 </html>
