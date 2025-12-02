@@ -5,18 +5,24 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 
 const io = new Server(server, {
-    cors: { origin: "*" }
+    cors: {
+        origin: "*"
+    }
 });
 
+// public klasörü statik olarak sun
 app.use(express.static(__dirname + "/public"));
 
+// ana sayfa
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/public/duo.html");
 });
 
+// socket.io
 io.on("connection", (socket) => {
     console.log("Bir kullanıcı bağlandı");
 
+    // tüm kullanıcılara mesajı gönder
     socket.on("sendMessage", (data) => {
         io.emit("newMessage", data);
     });
@@ -26,6 +32,8 @@ io.on("connection", (socket) => {
     });
 });
 
-server.listen(process.env.PORT || 3000, () => {
-    console.log("Sunucu çalışıyor...");
+// Railway (veya local) port
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log("Sunucu çalışıyor. Port:", PORT);
 });
