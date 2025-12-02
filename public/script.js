@@ -1,78 +1,72 @@
+const socket = io();
+
 let username = "";
 
-// Kullanıcı adını popup ile sor
-function askUsername() {
-  while (!username) {
-    const value = prompt("Kullanıcı adınızı girin:");
-    if (!value) {
-      alert("Kullanıcı adı boş olamaz.");
-      continue;
-    }
-    const trimmed = value.trim();
-    if (!trimmed) {
-      alert("Kullanıcı adı boş olamaz.");
-      continue;
-    }
-    username = trimmed;
-  }
+const popup = document.getElementById("popup");
+const saveUsername = document.getElementById("saveUsername");
+const usernameInput = document.getElementById("usernameInput");
+
+const chatBox = document.getElementById("chatBox");
+const msgInput = document.getElementById("msgInput");
+const sendBtn = document.getElementById("sendBtn");
+const messagesUl = document.querySelector(".messages");
+
+saveUsername.onclick = () => {
+    username = usernameInput.value.trim();
+    if (!username) return;
+
+    popup.style.display = "none";
+    chatBox.style.display = "flex";
+
+    socket.emit("setUsername", username);
+};
+
+sendBtn.onclick = sendMessage;
+msgInput.addEventListener("keypress", e => {
+    if (e.key === "Enter") sendMessage();
+});
+
+function sendMessage() {
+    const text = msgInput.value.trim();
+    if (!text) return;
+    socket.emit("sendMessage", text);
+    msgInput.value = "";
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  // sayfa yüklenince kullanıcı adını sor
-  askUsername();
+socket.on("newMessage", (msg) => {
+    addMessage(msg);
+});
 
-  const socket = io();
-
-  const input = document.getElementById("msgInput");
-  const sendBtn = document.getElementById("sendBtn");
-  const messagesUl = document.querySelector(".messages");
-
-  function sendMessage() {
-    const text = input.value.trim();
-    if (!text) return;
-
-    const data = {
-      user: username,
-      text: text,
-      time: new Date().toLocaleTimeString().slice(0, 5)
-    };
-
-    // sunucuya mesajı gönder
-    socket.emit("sendMessage", data);
-
-    input.value = "";
-  }
-
-  sendBtn.addEventListener("click", sendMessage);
-
-  input.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      sendMessage();
-    }
-  });
-
-  // sunucudan yeni mesaj geldiğinde ekrana bas
-  socket.on("newMessage", (data) => {
-    addMessage(data);
-  });
-
-  function addMessage(data) {
+function addMessage(msg) {
     const li = document.createElement("li");
     li.classList.add("message");
 
-    // kendi mesajımızsa sağ tarafa hizala
-    if (data.user === username) {
-      li.classList.add("mine");
-    }
+    let statusClass = msg.online ? "status-online" : "status-offline";
 
     li.innerHTML = `
-      <span class="sender">${data.user}</span>
-      <p class="text">${data.text}</p>
-      <span class="date">${data.time}</span>
+        <div class="user">
+            <span class="${statusClass}"></span>
+            ${msg.user}
+        </div>
+        <p class="text">${msg.text}</p>
+        <div class="date">${msg.time}</div>
     `;
 
+    if (msg.user === username) li.classList.add("mine");
+
     messagesUl.appendChild(li);
-    // her yeni mesajda listeyi en alta kaydır
     messagesUl.scrollTop = messagesUl.scrollHeight;
-  }
+}
+
+socket.on("onlineUsers", (users) => {
+    // İstersen sağa kullanıcı listesi ekleyebiliriz
+});
+
+socket.on("userDisconnected", (info) => {
+    addMessage({
+        user: info.user,
+        text: "çevrim dışı oldu",
+        time: new Date().toLocaleTimeString().slice(0, 5),
+        online: false
+    });
 });
