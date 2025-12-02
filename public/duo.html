@@ -6,33 +6,57 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <title>DuoBult</title>
+    <title>DuoBul Sohbet</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <!-- Kullanıcı adı popup -->
-    <div id="usernameModal" class="modal">
-      <div class="modal-content">
-        <h3>Kullanıcı adınız</h3>
-        <input
-          type="text"
-          id="usernameInput"
-          placeholder="Bir isim yaz..."
-        />
-        <button id="usernameSaveBtn">Sohbete Başla</button>
+    <!-- GİRİŞ EKRANI -->
+    <div id="login-screen" class="login-overlay">
+      <div class="login-card">
+        <div class="logo-area">
+          <div class="logo-circle"></div>
+          <div class="logo-texts">
+            <div class="logo-title">
+              <span class="logo-duo">Duo</span
+              ><span class="logo-bul">Bul</span>
+            </div>
+            <div class="logo-subtitle">Oyuncu Arkadaşını Bul</div>
+          </div>
+        </div>
+
+        <p class="login-tagline">
+          Anında Bağlan, Hemen Oyna.
+        </p>
+
+        <form id="login-form" class="login-form">
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input
+              type="text"
+              id="username-input"
+              placeholder="Kullanıcı adı gir..."
+              autocomplete="off"
+            />
+          </div>
+          <button type="submit" class="login-button">
+            Giriş Yap <span class="login-arrow">➤</span>
+          </button>
+        </form>
       </div>
     </div>
 
-    <div class="container">
-      <h2>duobul Sohbet</h2>
+    <!-- SOHBET KISMI -->
+    <div class="container" id="chat-container">
+      <h2>Sohbet</h2>
 
-      <ul class="messages"></ul>
+      <ul class="messages" id="messages"></ul>
 
       <div class="input">
         <input
           type="text"
           id="msgInput"
           placeholder="Mesaj yaz..."
+          autocomplete="off"
         />
         <button id="sendBtn">➤</button>
       </div>
