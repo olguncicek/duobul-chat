@@ -1,26 +1,35 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sohbet</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sohbet</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
+
+<!-- Kullanıcı adı popup -->
+<div class="username-popup" id="popup">
+    <div class="popup-box">
+        <h2>Kullanıcı Adı Gir</h2>
+        <input type="text" id="usernameInput" placeholder="Adınız...">
+        <button id="saveUsername">Giriş Yap</button>
+    </div>
+</div>
+
+<div class="container" id="chatBox" style="display:none;">
     <h2>Sohbet</h2>
 
     <ul class="messages"></ul>
 
     <div class="input">
-      <input type="text" id="msgInput" placeholder="Mesaj yaz..." />
-      <button id="sendBtn">➤</button>
+        <input type="text" id="msgInput" placeholder="Mesaj yaz...">
+        <button id="sendBtn">➤</button>
     </div>
-  </div>
+</div>
 
-  <!-- Socket.io -->
-  <script src="/socket.io/socket.io.js"></script>
-  <!-- Uygulama script'i -->
-  <script src="script.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="script.js"></script>
+
 </body>
 </html>
