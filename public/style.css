@@ -11,9 +11,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at top left, #1b2838, #060b10);
   color: #fff;
-  background: url("img/i.jpg") no-repeat center center fixed;
+  background: url("img/background.png") no-repeat center center fixed;
     background-size: cover;
 }
 
