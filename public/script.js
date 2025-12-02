@@ -1,57 +1,90 @@
 const socket = io();
 
-let username = "";
-
-const usernameBox = document.getElementById("usernameBox");
-const chatBox = document.getElementById("chatBox");
-
+// HTML elemanları
 const usernameInput = document.getElementById("usernameInput");
-const saveUsername = document.getElementById("saveUsername");
+const saveUsernameBtn = document.getElementById("saveUsername");
+const usernameInfo = document.getElementById("usernameInfo");
 
-const messagesUl = document.getElementById("messages");
 const msgInput = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
+const messagesUl = document.querySelector(".messages");
 
+let currentUsername = localStorage.getItem("username") || "";
 
-saveUsername.addEventListener("click", () => {
-    if (usernameInput.value.trim() === "") return;
-    username = usernameInput.value;
+// Sayfa açılınca kayıtlı isim varsa göster
+if (currentUsername) {
+    usernameInput.value = currentUsername;
+    usernameInfo.textContent = `Kullanıcı adın: ${currentUsername}`;
+}
 
-    usernameBox.style.display = "none";
-    chatBox.style.display = "block";
+// ----- Kullanıcı adı kaydetme -----
+function saveUsername() {
+    const name = usernameInput.value.trim();
+    if (!name) return;
+
+    currentUsername = name;
+    localStorage.setItem("username", currentUsername);
+    usernameInfo.textContent = `Kullanıcı adın: ${currentUsername}`;
+}
+
+saveUsernameBtn.addEventListener("click", saveUsername);
+usernameInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") saveUsername();
 });
 
+// ----- Mesaj gönderme -----
+function sendMessage() {
+    const text = msgInput.value.trim();
+    if (!text) return;
+
+    const data = {
+        user: currentUsername || "Misafir",
+        text: text,
+        time: new Date().toLocaleTimeString("tr-TR", {
+            hour: "2-digit",
+            minute: "2-digit"
+        })
+    };
+
+    socket.emit("sendMessage", data);
+    msgInput.value = "";
+}
 
 sendBtn.addEventListener("click", sendMessage);
 msgInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") sendMessage();
 });
 
-function sendMessage() {
-    if (msgInput.value.trim() === "") return;
-
-   socket.emit("sendMessage", {
-    user: username,
-    msg: msg,
-    time: Date.now()
+// ----- Sunucudan gelen mesajı ekrana bas -----
+socket.on("newMessage", (data) => {
+    addMessage(data);
 });
 
-
-    msgInput.value = "";
-}
-
-
-socket.on("newMessage", (data) => {
+function addMessage(data) {
     const li = document.createElement("li");
+    li.classList.add("message");
 
-    li.classList.add("msg");
-    if (data.user === username) li.classList.add("mine");
+    // bu mesajı atan sensen sağ tarafa hizala
+    if (data.user === (currentUsername || "Misafir")) {
+        li.classList.add("mine");
+    }
 
     li.innerHTML = `
-        <div class="user">${data.user}</div>
-        <div class="text">${data.text}</div>
+        <span class="sender">${escapeHtml(data.user)}</span>
+        <p class="text">${escapeHtml(data.text)}</p>
+        <span class="date">${data.time}</span>
     `;
 
     messagesUl.appendChild(li);
     messagesUl.scrollTop = messagesUl.scrollHeight;
-});
+}
+
+// basit XSS koruması
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
