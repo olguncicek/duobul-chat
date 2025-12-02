@@ -259,3 +259,7 @@ ul.messages li.message.mine {
   transform: translateY(-1px);
   box-shadow: 0 11px 30px rgba(34, 229, 111, 0.55);
 }
+
+.image{
+  filter: blur(10px);
+}
