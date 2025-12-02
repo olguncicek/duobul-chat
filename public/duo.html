@@ -1,35 +1,44 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sohbet</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<!-- Kullanıcı adı popup -->
-<div class="username-popup" id="popup">
-    <div class="popup-box">
-        <h2>Kullanıcı Adı Gir</h2>
-        <input type="text" id="usernameInput" placeholder="Adınız...">
-        <button id="saveUsername">Giriş Yap</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>duobul Sohbet</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Kullanıcı adı popup -->
+    <div id="usernameModal" class="modal">
+      <div class="modal-content">
+        <h3>Kullanıcı adınız</h3>
+        <input
+          type="text"
+          id="usernameInput"
+          placeholder="Bir isim yaz..."
+        />
+        <button id="usernameSaveBtn">Sohbete Başla</button>
+      </div>
     </div>
-</div>
 
-<div class="container" id="chatBox" style="display:none;">
-    <h2>Sohbet</h2>
+    <div class="container">
+      <h2>duobul Sohbet</h2>
 
-    <ul class="messages"></ul>
+      <ul class="messages"></ul>
 
-    <div class="input">
-        <input type="text" id="msgInput" placeholder="Mesaj yaz...">
+      <div class="input">
+        <input
+          type="text"
+          id="msgInput"
+          placeholder="Mesaj yaz..."
+        />
         <button id="sendBtn">➤</button>
+      </div>
     </div>
-</div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="script.js"></script>
-
-</body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+  </body>
 </html>
