@@ -1,51 +1,33 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DuoBul </title>
-  <link rel="icon" type="image/png" href="/favicon-16x16.png">
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DuoBul</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-  <!-- Giriş ekranı -->
-  <div id="loginModal" class="login-modal">
-   <div class="logo">
-    <img src="image/logo.png" alt="DuoBul Logo" class="logo-img">
+<div class="chat-container">
+
+    <!-- ÜST LOGO BÖLÜMÜ -->
+    <div class="chat-header">
+        <img src="image/logo.png" class="site-logo" alt="DuoBul Logo">
+    </div>
+
+    <!-- MESAJ LİSTESİ -->
+    <ul id="messages"></ul>
+
+    <!-- MESAJ GİRİŞİ -->
+    <div class="input-area">
+        <input id="messageInput" type="text" placeholder="Mesaj yaz..." autocomplete="off" />
+        <button id="sendBtn">➤</button>
+    </div>
 </div>
 
-      </div>
-      <p class="login-tagline">Yeni Takım Arkadaşın Bir Tık Uzakta.</p>
+<script src="/socket.io/socket.io.js"></script>
+<script src="script.js"></script>
 
-      <div class="login-input-group">
-        <input
-          type="text"
-          id="usernameInput"
-          placeholder="Kullanıcı Adı Gir..."
-        />
-      </div>
-      <button id="loginBtn" class="login-button">
-        Giriş Yap ✈
-      </button>
-    </div>
-  </div>
-
-  <!-- Sohbet kutusu -->
-  <div class="chat-container blur" id="chatContainer">
-  <img class="image" src="../public/image/i.jpg" alt="" />
-
-    <h2>Sohbet</h2>
-
-    <ul class="messages"></ul>
-
-    <div class="input">
-      <input type="text" id="msgInput" placeholder="Mesaj yaz..." />
-      <button id="sendBtn">➤</button>
-    </div>
-  </div>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js"></script>
 </body>
 </html>
