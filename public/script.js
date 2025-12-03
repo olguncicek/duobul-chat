@@ -2,26 +2,36 @@ const socket = io();
 
 let username = "";
 
-// SAYFA AÇILDIĞINDA KULLANICI ADI POPUP
-window.onload = () => {
-    while (!username) {
-        username = prompt("Kullanıcı adınızı girin:");
-    }
+// POPUP ELEMENTLERİ
+const popup = document.getElementById("usernamePopup");
+const usernameInput = document.getElementById("usernameInput");
+const saveUsername = document.getElementById("saveUsername");
+
+// POPUP AÇIK KALSIN, KULLANICI ADI GİRİLMEDEN SOHBETE GİRİŞ YOK
+saveUsername.onclick = () => {
+    const val = usernameInput.value.trim();
+    if (!val) return;
+    username = val;
+
+    popup.style.display = "none";
 };
 
+// MESAJ ELEMENTLERİ
 const input = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 const messagesList = document.getElementById("messages");
 
+// GÖNDERME
 sendBtn.onclick = sendMessage;
 input.addEventListener("keypress", e => {
     if (e.key === "Enter") sendMessage();
 });
 
-// MESAJ GÖNDER
 function sendMessage() {
+    if (!username) return; // kullanıcı adını girmeden gönderemez
+
     const text = input.value.trim();
-    if (!text || !username) return;
+    if (!text) return;
 
     socket.emit("chatMessage", {
         user: username,
@@ -32,13 +42,12 @@ function sendMessage() {
     input.value = "";
 }
 
-// DOĞRU SAAT FORMAT
+// DOĞRU SAAT FORMAT (TÜRKİYE)
 function getTime() {
     const now = new Date();
     return now.toLocaleTimeString("tr-TR", {
         hour: "2-digit",
-        minute: "2-digit",
-        hour12: false
+        minute: "2-digit"
     });
 }
 
@@ -47,6 +56,7 @@ socket.on("chatMessage", data => {
     const li = document.createElement("li");
     li.classList.add("message");
 
+    // senin mesajın mı?
     if (data.user === username) li.classList.add("you");
     else li.classList.add("other");
 
