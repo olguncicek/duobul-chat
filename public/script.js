@@ -2,10 +2,12 @@ const socket = io();
 
 let username = "";
 
-// ✔ Kullanıcı adı popup ile soruluyor
-while (!username) {
-    username = prompt("Kullanıcı adınız:");
-}
+// SAYFA AÇILDIĞINDA KULLANICI ADI POPUP
+window.onload = () => {
+    while (!username) {
+        username = prompt("Kullanıcı adınızı girin:");
+    }
+};
 
 const input = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
@@ -16,10 +18,10 @@ input.addEventListener("keypress", e => {
     if (e.key === "Enter") sendMessage();
 });
 
-// ✔ MESAJ GÖNDER
+// MESAJ GÖNDER
 function sendMessage() {
     const text = input.value.trim();
-    if (!text) return;
+    if (!text || !username) return;
 
     socket.emit("chatMessage", {
         user: username,
@@ -30,7 +32,7 @@ function sendMessage() {
     input.value = "";
 }
 
-// ✔ SAAT DOĞRU TR FORMATINDA
+// DOĞRU SAAT FORMAT
 function getTime() {
     const now = new Date();
     return now.toLocaleTimeString("tr-TR", {
@@ -40,15 +42,13 @@ function getTime() {
     });
 }
 
-// ✔ MESAJ ALMA
+// MESAJ ALMA
 socket.on("chatMessage", data => {
     const li = document.createElement("li");
     li.classList.add("message");
 
-    if (data.user === username)
-        li.classList.add("you");
-    else
-        li.classList.add("other");
+    if (data.user === username) li.classList.add("you");
+    else li.classList.add("other");
 
     li.innerHTML = `
         <b>${data.user}</b>: ${data.msg}
