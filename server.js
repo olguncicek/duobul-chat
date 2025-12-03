@@ -1,77 +1,56 @@
-// ================================
-//  DUOBUL – SOHBET SERVER
-// ================================
-
 const express = require("express");
-const http = require("http");
-const path = require("path");
-const socketIO = require("socket.io");
-
 const app = express();
-const server = http.createServer(app);
-const io = socketIO(server);
+const http = require("http").createServer(app);
+const io = require("socket.io")(http);
 
-// Public klasörünü sun
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("public"));
 
-// Ana sayfa
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "duo.html"));
-});
+io.on("connection", socket => {
+    console.log("Bir kullanıcı bağlandı.");
 
-// Kullanıcı listesi
-let users = {};
+    // Kullanıcı odaya katılıyor
+    socket.on("joinRoom", ({ username, room }) => {
+        socket.username = username;
+        socket.room = room;
 
-// ------------------------------
-//  SOCKET.IO
-// ------------------------------
-io.on("connection", (socket) => {
-    console.log("Bir kullanıcı bağlandı:", socket.id);
+        socket.join(room);
 
-    // Kullanıcı giriş yaptı
-    socket.on("setUsername", (username) => {
-        users[socket.id] = username;
+        console.log(`${username} -> ${room} odasına girdi`);
 
-        // Kullanıcı online oldu
-        io.emit("userStatus", {
-            user: username,
-            status: "online",
-            time: new Date().toLocaleTimeString("tr-TR", {
-                hour: "2-digit",
-                minute: "2-digit"
-            })
+        // Odaya kullanıcı giriş mesajı
+        socket.to(room).emit("systemMessage", {
+            msg: `${username} sohbete katıldı.`,
+            time: getTime()
         });
     });
 
-    // Mesaj geldi
-    socket.on("chatMessage", (data) => {
-        io.emit("chatMessage", data);
+    // Mesaj gönderme
+    socket.on("chatMessage", ({ room, user, msg }) => {
+        io.to(room).emit("chatMessage", {
+            user,
+            msg,
+            time: getTime()
+        });
     });
 
-    // Bağlantı koptu
+    // Ayrılınca mesaj
     socket.on("disconnect", () => {
-        const username = users[socket.id];
+        if (!socket.username || !socket.room) return;
 
-        if (username) {
-            io.emit("userStatus", {
-                user: username,
-                status: "offline",
-                time: new Date().toLocaleTimeString("tr-TR", {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                })
-            });
-            delete users[socket.id];
-        }
-
-        console.log("Kullanıcı ayrıldı:", socket.id);
+        io.to(socket.room).emit("systemMessage", {
+            msg: `${socket.username} sohbetten ayrıldı.`,
+            time: getTime()
+        });
     });
 });
 
-// ------------------------------
-//  PORT AYARI
-// ------------------------------
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log("Sunucu çalışıyor. Port:", PORT);
-});
+function getTime() {
+    const now = new Date();
+    return now.toLocaleTimeString("tr-TR", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
+const PORT = process.env.PORT || 8080;
+http.listen(PORT, () => console.log("Sunucu çalışıyor: " + PORT));
