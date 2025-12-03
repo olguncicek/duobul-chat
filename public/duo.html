@@ -10,38 +10,39 @@
 <body>
 
 <!-- GİRİŞ EKRANI -->
-<div id="login-screen" class="login-card">
-    <h2>DuoBul</h2>
-    <p>Bir kullanıcı adı seç:</p>
-    <input type="text" id="usernameInput" placeholder="Kullanıcı adı...">
-    <button id="loginBtn">Giriş Yap</button>
+<div id="loginScreen" class="login-screen">
+    <div class="login-card">
+        <h2>Bir kullanıcı adı seç:</h2>
+        <input id="usernameInput" type="text" placeholder="Kullanıcı adı...">
+        <button id="loginBtn">Giriş Yap</button>
+    </div>
 </div>
 
 <!-- SOHBET EKRANI -->
-<div id="chat-container" class="chat-container hidden">
+<div id="chatScreen" class="chat-screen hidden">
 
-    <!-- ODA SEÇİM ÇUBUĞU -->
-    <div class="room-bar">
-        <div class="room" data-room="Valorant">Valorant</div>
-        <div class="room" data-room="LOL">League of Legends</div>
-        <div class="room" data-room="CS2">CS2</div>
-        <div class="room" data-room="Rust">Rust</div>
-        <div class="room" data-room="PUBG">PUBG</div>
-        <div class="room" data-room="Genel">Genel Sohbet</div>
+    <!-- OYUN MENÜSÜ -->
+    <div class="room-menu">
+        <button data-room="valorant">Valorant</button>
+        <button data-room="lol">League of Legends</button>
+        <button data-room="cs2">CS2</button>
+        <button data-room="rust">Rust</button>
+        <button data-room="pubg">PUBG</button>
+        <button data-room="genel">Genel Sohbet</button>
     </div>
 
-    <h3 id="roomTitle">Sohbet</h3>
-    
-    <ul id="messages"></ul>
+    <!-- SOHBET KUTUSU -->
+    <div class="chat-container">
+        <ul id="messages"></ul>
 
-    <div class="input-area">
-        <input id="messageInput" type="text" placeholder="Mesaj yaz..." autocomplete="off">
-        <button id="sendBtn">➤</button>
+        <div class="input-area">
+            <input id="messageInput" type="text" placeholder="Mesaj yaz...">
+            <button id="sendBtn">➤</button>
+        </div>
     </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="script.js"></script>
-
 </body>
 </html>
