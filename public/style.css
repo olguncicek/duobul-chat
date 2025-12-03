@@ -1,116 +1,91 @@
+/* ARKA PLAN */
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    padding: 0;
     background: url("image/i.jpg") no-repeat center center fixed;
     background-size: cover;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* GİZLEME */
-.hidden { display: none; }
-
-/* GİRİŞ KARTI */
-.login-card {
-    width: 400px;
-    background: rgba(0,0,0,0.8);
-    padding: 25px;
-    border-radius: 15px;
-    text-align: center;
-    margin: 120px auto;
-    box-shadow: 0 0 25px rgba(0,0,0,0.5);
-}
-
-.login-card input {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border-radius: 8px;
-    border: none;
-    outline: none;
-    background: #222;
-    color: white;
-}
-
-.login-card button {
-    width: 100%;
-    padding: 14px;
-    margin-top: 15px;
-    background: #00ff85;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-/* SOHBET ANA KUTU */
+/* SOHBET KUTUSU */
 .chat-container {
-    width: 80%;
+    width: 60%;
+    max-width: 750px;
     height: 80vh;
     margin: 40px auto;
-    background: #0d0f12;
+    background: #0d0f14;   /* tam siyah kutu */
     border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.6);
     display: flex;
     flex-direction: column;
+    padding: 15px;
 }
 
-/* ÜST ODA SEÇİM BAR */
-.room-bar {
-    display: flex;
-    gap: 8px;
-    padding: 12px;
-    background: #111;
-    border-bottom: 1px solid #222;
-}
-
-.room {
-    padding: 8px 14px;
-    background: #222;
+/* BAŞLIK */
+.title {
     color: white;
-    border-radius: 8px;
-    cursor: pointer;
+    margin: 0 0 10px 0;
 }
 
-.room:hover {
-    background: #333;
-}
-
-/* MESAJLAR */
+/* MESAJ ALANI */
 #messages {
     flex: 1;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
     overflow-y: auto;
-    list-style: none;
-    padding: 20px;
-    color: white;
 }
 
-#messages li {
+.message {
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 10px;
     margin-bottom: 10px;
+    color: white;
+    font-size: 15px;
 }
 
+/* SENİN MESAJLARIN */
+.you {
+    background: #00c853;
+    margin-left: auto;
+    text-align: right;
+}
+
+/* DİĞERLERİ */
+.other {
+    background: #30343a;
+}
+
+/* SAAT */
 .time {
-    font-size: 12px;
-    opacity: 0.6;
+    font-size: 11px;
+    opacity: .7;
+    margin-left: 6px;
 }
 
-/* ALT MESAJ GİRİŞİ */
+/* ALT GÖNDERME ALANI */
 .input-area {
     display: flex;
-    padding: 12px;
-    background: #111;
+    margin-top: 10px;
 }
 
-#messageInput {
+.input-area input {
     flex: 1;
     padding: 12px;
-    background: #222;
+    background: #111;
     border: none;
     border-radius: 8px;
     color: white;
+    font-size: 15px;
 }
 
-#sendBtn {
-    margin-left: 10px;
+.input-area button {
+    background: #00e676;
     padding: 0 18px;
-    background: #00ff85;
+    margin-left: 10px;
+    border-radius: 50px;
     border: none;
-    border-radius: 8px;
     cursor: pointer;
+    font-size: 20px;
 }
