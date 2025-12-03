@@ -1,74 +1,77 @@
+// ================================
+//  DUOBUL – SOHBET SERVER
+// ================================
+
 const express = require("express");
 const http = require("http");
+const path = require("path");
+const socketIO = require("socket.io");
+
 const app = express();
 const server = http.createServer(app);
-const { Server } = require("socket.io");
+const io = socketIO(server);
 
-const io = new Server(server, {
-  cors: {
-    origin: "*"
-  }
-});
+// Public klasörünü sun
+app.use(express.static(path.join(__dirname, "public")));
 
-// public klasörü
-app.use(express.static(__dirname + "/public"));
-
+// Ana sayfa
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/duo.html");
+    res.sendFile(path.join(__dirname, "public", "duo.html"));
 });
 
-// username -> aktif socket sayısı
-const users = new Map();
+// Kullanıcı listesi
+let users = {};
 
+// ------------------------------
+//  SOCKET.IO
+// ------------------------------
 io.on("connection", (socket) => {
-  console.log("Bir kullanıcı bağlandı");
-  let username = null;
+    console.log("Bir kullanıcı bağlandı:", socket.id);
 
-  // Kullanıcı adını al
-  socket.on("setUsername", (name) => {
-    if (!name) return;
-    username = name.trim();
-    if (!username) return;
+    // Kullanıcı giriş yaptı
+    socket.on("setUsername", (username) => {
+        users[socket.id] = username;
 
-    const count = users.get(username) || 0;
-    users.set(username, count + 1);
+        // Kullanıcı online oldu
+        io.emit("userStatus", {
+            user: username,
+            status: "online",
+            time: new Date().toLocaleTimeString("tr-TR", {
+                hour: "2-digit",
+                minute: "2-digit"
+            })
+        });
+    });
 
-    // Bu kullanıcı çevrimiçi
-    io.emit("userStatus", { username, online: true });
-  });
+    // Mesaj geldi
+    socket.on("chatMessage", (data) => {
+        io.emit("chatMessage", data);
+    });
 
-  // Mesaj gönder
-  socket.on("sendMessage", (data) => {
-    if (!username) return;
-    const { text, time } = data;
-    if (!text || !time) return;
+    // Bağlantı koptu
+    socket.on("disconnect", () => {
+        const username = users[socket.id];
 
-    const msg = {
-      username,
-      text,
-      time
-    };
+        if (username) {
+            io.emit("userStatus", {
+                user: username,
+                status: "offline",
+                time: new Date().toLocaleTimeString("tr-TR", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                })
+            });
+            delete users[socket.id];
+        }
 
-    io.emit("newMessage", msg);
-  });
-
-  // Bağlantı koptuğunda
-  socket.on("disconnect", () => {
-    console.log("Bir kullanıcı ayrıldı");
-    if (!username) return;
-
-    const count = users.get(username) || 0;
-    if (count <= 1) {
-      users.delete(username);
-      // Bu kullanıcı tamamen çıktı → offline
-      io.emit("userStatus", { username, online: false });
-    } else {
-      users.set(username, count - 1);
-    }
-  });
+        console.log("Kullanıcı ayrıldı:", socket.id);
+    });
 });
 
+// ------------------------------
+//  PORT AYARI
+// ------------------------------
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log("Sunucu çalışıyor. Port:", PORT);
+    console.log("Sunucu çalışıyor. Port:", PORT);
 });
