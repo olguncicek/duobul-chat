@@ -132,8 +132,8 @@ body {
 
 /* Sohbet kutusu */
 .chat-container {
-    width: 90%;          /* 75% → 90% yap */
-    max-width: 1400px;   /* 1100px → 1400px yap */
+    width: 80%;          /* 75% → 90% yap */
+    max-width: 1200px;   /* 1100px → 1400px yap */
     height: 85vh;
     margin: 40px auto;
     background: rgba(0,0,0,0.50);
