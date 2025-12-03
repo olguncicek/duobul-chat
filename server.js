@@ -20,9 +20,15 @@ app.get("/", (req, res) => {
 // username -> aktif socket sayısı
 const users = new Map();
 
+// io.on("connection", ...) bloğunun içini şu şekilde güncelle:
+
 io.on("connection", (socket) => {
   console.log("Bir kullanıcı bağlandı");
   let username = null;
+  
+  // Her kullanıcı varsayılan olarak "genel" odasında başlar
+  let currentRoom = "genel"; 
+  socket.join("genel");
 
   // Kullanıcı adını al
   socket.on("setUsername", (name) => {
@@ -33,11 +39,23 @@ io.on("connection", (socket) => {
     const count = users.get(username) || 0;
     users.set(username, count + 1);
 
-    // Bu kullanıcı çevrimiçi
+    // Kullanıcı online bilgisini herkese gönder (Status global kalabilir)
     io.emit("userStatus", { username, online: true });
   });
 
-  // Mesaj gönder
+  // --- YENİ: ODA DEĞİŞTİRME ---
+  socket.on("joinRoom", (roomName) => {
+    // Eski odadan ayrıl
+    socket.leave(currentRoom);
+    // Yeni odaya gir
+    socket.join(roomName);
+    currentRoom = roomName;
+
+    // (İsteğe bağlı) Kullanıcıya odaya girdiğine dair sistem mesajı gönderebilirsin
+    // socket.emit("newMessage", { username: "Sistem", text: `${roomName} odasına katıldın.`, time: "..." });
+  });
+
+  // Mesaj gönder (GÜNCELLENDİ)
   socket.on("sendMessage", (data) => {
     if (!username) return;
     const { text, time } = data;
@@ -49,7 +67,9 @@ io.on("connection", (socket) => {
       time
     };
 
-    io.emit("newMessage", msg);
+    // io.emit yerine io.to(currentRoom).emit kullanıyoruz
+    // Böylece mesaj sadece o odadaki kişilere gider.
+    io.to(currentRoom).emit("newMessage", msg);
   });
 
   // Bağlantı koptuğunda
@@ -60,7 +80,6 @@ io.on("connection", (socket) => {
     const count = users.get(username) || 0;
     if (count <= 1) {
       users.delete(username);
-      // Bu kullanıcı tamamen çıktı → offline
       io.emit("userStatus", { username, online: false });
     } else {
       users.set(username, count - 1);
