@@ -1,80 +1,79 @@
 const socket = io();
 
 let username = "";
-let currentRoom = "valorant";
+let currentRoom = "Genel";
 
-// Giriş ekranı -----------------
+/* GİRİŞ YAP */
 document.getElementById("loginBtn").onclick = () => {
-    const name = document.getElementById("loginName").value.trim();
+    const name = document.getElementById("usernameInput").value.trim();
     if (!name) return;
 
     username = name;
 
-    document.getElementById("login-screen").style.display = "none";
-    document.querySelector(".chat-container").style.display = "flex";
+    // login ekranını gizle, sohbete geç
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("chat-container").classList.remove("hidden");
 
-    socket.emit("joinRoom", { user: username, room: currentRoom });
+    joinRoom(currentRoom);
 };
 
-// ELEMENTLER -----------------
-const input = document.getElementById("messageInput");
-const sendBtn = document.getElementById("sendBtn");
-const messagesList = document.getElementById("messages");
+// ODA SEÇİMİ
+document.querySelectorAll(".room").forEach(room => {
+    room.onclick = () => {
+        document.querySelectorAll(".room").forEach(r => r.classList.remove("active"));
+        room.classList.add("active");
 
-// MESAJ GÖNDER -----------------
-sendBtn.onclick = sendMessage;
+        currentRoom = room.dataset.room;
+        joinRoom(currentRoom);
+    };
+});
 
-input.addEventListener("keypress", e => {
+// ODAYA GİR
+function joinRoom(room) {
+    socket.emit("joinRoom", { username, room });
+    document.getElementById("roomTitle").textContent = room + " Sohbeti";
+    document.getElementById("messages").innerHTML = "";
+}
+
+/* MESAJ GÖNDER */
+document.getElementById("sendBtn").onclick = sendMessage;
+document.getElementById("messageInput").addEventListener("keypress", e => {
     if (e.key === "Enter") sendMessage();
 });
 
 function sendMessage() {
-    const text = input.value.trim();
-    if (!text) return;
+    const msg = document.getElementById("messageInput").value.trim();
+    if (!msg) return;
 
     socket.emit("chatMessage", {
         user: username,
-        msg: text,
-        time: getTime(),
-        room: currentRoom
+        msg,
+        room: currentRoom,
+        time: getTime()
     });
 
-    input.value = "";
+    document.getElementById("messageInput").value = "";
 }
 
 function getTime() {
-    const now = new Date();
-    return now.toLocaleTimeString("tr-TR", {
+    return new Date().toLocaleTimeString("tr-TR", {
         hour: "2-digit",
-        minute: "2-digit",
+        minute: "2-digit"
     });
 }
 
-// MESAJ AL -----------------
+/* MESAJ AL */
 socket.on("chatMessage", data => {
     if (data.room !== currentRoom) return;
 
     const li = document.createElement("li");
     li.classList.add("message");
+    if (data.user === username) li.classList.add("you");
 
-    li.classList.add(data.user === username ? "you" : "other");
     li.innerHTML = `
         <b>${data.user}</b>: ${data.msg}
         <span class="time">${data.time}</span>
     `;
-    messagesList.appendChild(li);
-    messagesList.scrollTop = messagesList.scrollHeight;
-});
 
-// ODA DEĞİŞTİR -----------------
-document.querySelectorAll(".room").forEach(btn => {
-    btn.addEventListener("click", () => {
-        document.querySelector(".room.active").classList.remove("active");
-        btn.classList.add("active");
-
-        currentRoom = btn.dataset.room;
-        messagesList.innerHTML = "";
-
-        socket.emit("joinRoom", { user: username, room: currentRoom });
-    });
+    document.getElementById("messages").appendChild(li);
 });
