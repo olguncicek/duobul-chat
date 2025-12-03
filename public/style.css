@@ -1,91 +1,269 @@
-/* ARKA PLAN */
-body {
-    margin: 0;
-    padding: 0;
-    background: url("image/i.jpg") no-repeat center center fixed;
-    background-size: cover;
-    font-family: 'Segoe UI', sans-serif;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+
 }
 
-/* SOHBET KUTUSU */
+/* Arka plan */
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: url("image/i.jpg") no-repeat center center fixed;
+  background-size: cover;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Bulanık efekt */
+.blur {
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* Giriş Modalı */
+.login-modal {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top left, #1b2838, #060b10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.login-modal.hidden {
+  display: none;
+}
+
+.login-card {
+  width: 480px;
+  max-width: 95vw;
+  background: linear-gradient(145deg, #141820, #10131a);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  padding: 32px 32px 28px;
+  border: 1px solid #1f2933;
+
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.logo-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #19e5ff, #1eff8b);
+  box-shadow: 0 0 20px rgba(25, 229, 255, 0.6);
+  margin-right: 10px;
+}
+
+.logo-texts {
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1eff8b;
+}
+
+.logo-subtitle {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #9ba4b4;
+}
+
+.login-tagline {
+  margin-bottom: 18px;
+  font-size: 14px;
+  color: #cbd5f5;
+}
+
+.login-input-group {
+  margin-bottom: 16px;
+}
+
+.login-input-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #343b48;
+  background: #0f141b;
+  color: #e5ecff;
+  outline: none;
+}
+
+.login-input-group input::placeholder {
+  color: #6c7484;
+}
+
+.login-button {
+  width: 100%;
+  padding: 10px 0;
+  margin-top: 4px;
+  border: none;
+  border-radius: 12px;
+  background: #22e56f;
+  color: #051108;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 12px 35px rgba(34, 229, 111, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease,
+    background 0.1s ease;
+}
+
+.login-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 40px rgba(34, 229, 111, 0.48);
+  background: #26f377;
+}
+
+/* Sohbet kutusu */
 .chat-container {
-    width: 60%;
-    max-width: 750px;
-    height: 80vh;
+    width: 80%;          /* 75% → 90% yap */
+    max-width: 1200px;   /* 1100px → 1400px yap */
+    height: 85vh;
     margin: 40px auto;
-    background: #0d0f14;   /* tam siyah kutu */
-    border-radius: 12px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    background: #0f141a;
+    border-radius: 14px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 40px rgba(0,0,0,0.4);
     display: flex;
     flex-direction: column;
-    padding: 15px;
+    overflow: hidden;
 }
 
-/* BAŞLIK */
-.title {
-    color: white;
-    margin: 0 0 10px 0;
+
+.chat-container h2 {
+  padding: 14px 16px;
+  background: #181f29;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 18px;
 }
 
-/* MESAJ ALANI */
-#messages {
-    flex: 1;
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-    overflow-y: auto;
+/* Mesaj listesi */
+ul.messages {
+  flex-grow: 1;
+  list-style: none;
+  padding: 12px 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.message {
-    max-width: 70%;
-    padding: 8px 12px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    color: white;
-    font-size: 15px;
+/* Mesaj balonu */
+ul.messages li.message {
+  background: #161f29;
+  padding: 7px 10px 8px;
+  max-width: 80%;
+  border-radius: 10px;
+  border-top-left-radius: 4px;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  color: #f1f5ff;
 }
 
-/* SENİN MESAJLARIN */
-.you {
-    background: #00c853;
-    margin-left: auto;
-    text-align: right;
+ul.messages li.message.mine {
+  align-self: flex-end;
+  background: #1e3132;
+  border-top-right-radius: 4px;
 }
 
-/* DİĞERLERİ */
-.other {
-    background: #30343a;
+/* Üst bilgi satırı */
+.message-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 3px;
 }
 
-/* SAAT */
-.time {
-    font-size: 11px;
-    opacity: .7;
-    margin-left: 6px;
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: #22e56f;
 }
 
-/* ALT GÖNDERME ALANI */
-.input-area {
-    display: flex;
-    margin-top: 10px;
+.status-dot.offline {
+  background: #e84545;
 }
 
-.input-area input {
-    flex: 1;
-    padding: 12px;
-    background: #111;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    font-size: 15px;
+.sender {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8ad0ff;
+  margin-right: 6px;
 }
 
-.input-area button {
-    background: #00e676;
-    padding: 0 18px;
-    margin-left: 10px;
-    border-radius: 50px;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
+.message.mine .sender {
+  color: #9cf6c3;
+}
+
+.date {
+  margin-left: auto;
+  font-size: 10px;
+  color: #97a2b8;
+}
+
+/* Mesaj metni */
+.text {
+  font-size: 13px;
+  line-height: 1.3rem;
+}
+
+/* Alt input alanı */
+.input {
+  display: flex;
+  padding: 8px 10px;
+  background: #181f29;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  gap: 6px;
+}
+
+.input input {
+  flex: 1;
+  padding: 9px 10px;
+  border-radius: 999px;
+  border: none;
+  background: #0f141b;
+  color: #e5ecff;
+  outline: none;
+}
+
+.input input::placeholder {
+  color: #6c7484;
+}
+
+.input button {
+  width: 46px;
+  border-radius: 999px;
+  border: none;
+  background: #22e56f;
+  color: #051108;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(34, 229, 111, 0.4);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.input button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 11px 30px rgba(34, 229, 111, 0.55);
 }
