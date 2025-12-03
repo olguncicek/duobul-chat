@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DuoBul</title>
+    <title>DuoBul Sohbet</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 
@@ -11,9 +11,13 @@
 
 <div class="chat-container">
 
-    <!-- ÜST LOGO BÖLÜMÜ -->
-    <div class="chat-header">
-        <img src="image/logo.png" class="site-logo" alt="DuoBul Logo">
+    <!-- KULLANICI ADI POPUP -->
+    <div id="usernamePopup" class="popup">
+        <div class="popup-box">
+            <h2>Kullanıcı Adı</h2>
+            <input type="text" id="usernameInput" placeholder="Kullanıcı adınız..." />
+            <button id="saveUsername">Giriş Yap</button>
+        </div>
     </div>
 
     <!-- MESAJ LİSTESİ -->
@@ -24,6 +28,7 @@
         <input id="messageInput" type="text" placeholder="Mesaj yaz..." autocomplete="off" />
         <button id="sendBtn">➤</button>
     </div>
+
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
