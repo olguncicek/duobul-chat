@@ -136,7 +136,7 @@ body {
     max-width: 1200px;   /* 1100px → 1400px yap */
     height: 85vh;
     margin: 40px auto;
-    background: rgba(0,0,0,0.50);
+    background: #0f141a;
     border-radius: 14px;
     backdrop-filter: blur(6px);
     box-shadow: 0 0 40px rgba(0,0,0,0.4);
