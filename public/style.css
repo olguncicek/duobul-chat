@@ -83,6 +83,21 @@ body {
   color: #cbd5f5;
 }
 
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-img {
+    height: 45px;           /* logonun yüksekliği */
+    width: auto;            /* oranı koru */
+    border-radius: 8px;     /* istersen yuvarlak yap: 50% */
+    object-fit: contain;    /* bozulmadan sığsın */
+    filter: drop-shadow(0 0 8px rgba(0, 255, 180, 0.6));
+}
+
+
 .login-input-group {
   margin-bottom: 16px;
 }
