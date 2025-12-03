@@ -36,9 +36,18 @@
   <!-- Sohbet kutusu -->
   <div class="chat-container blur" id="chatContainer">
     <h2>Sohbet</h2>
+    <div class="lobbies">
+        <button class="lobby-btn active" data-room="genel">🌍 Genel</button>
+        <button class="lobby-btn" data-room="oyun">🎮 Oyun</button>
+        <button class="lobby-btn" data-room="muzik">🎵 Müzik</button>
+        <button class="lobby-btn" data-room="destek">🔧 Destek</button>
+    </div>
 
     <ul class="messages"></ul>
-
+    <div class="input">
+        <input type="text" id="msgInput" placeholder="Mesaj yaz..." />
+        <button id="sendBtn">➤</button>
+    </div>
     <div class="input">
       <input type="text" id="msgInput" placeholder="Mesaj yaz..." />
       <button id="sendBtn">➤</button>
