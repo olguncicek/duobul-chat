@@ -1,51 +1,46 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DuoBul Sohbet</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuoBul Sohbet</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Giriş ekranı -->
-  <div id="loginModal" class="login-modal">
+<div id="login-screen">
     <div class="login-card">
-      <div class="logo-area">
-        <div class="logo-circle"></div>
-        <div class="logo-texts">
-          <div class="logo-title">DuoBul</div>
-          <div class="logo-subtitle">OYUNCU ARKADAŞINI BUL</div>
+        <h2>DuoBul</h2>
+        <p>Kullanıcı Adı Gir:</p>
+        <input type="text" id="loginName" placeholder="Kullanıcı adı...">
+        <button id="loginBtn">Giriş Yap ➤</button>
+    </div>
+</div>
+
+<!-- ANA SOHBET ALANI -->
+<div class="chat-container" style="display:none;">
+
+    <!-- SOHBET ODALARI -->
+    <div class="chat-header">
+        <div class="rooms">
+            <button class="room active" data-room="valorant">VALORANT</button>
+            <button class="room" data-room="lol">LOL</button>
+            <button class="room" data-room="genel">GENEL</button>
         </div>
-      </div>
-      <p class="login-tagline">Anında Bağlan, Hemen Oyna.</p>
-
-      <div class="login-input-group">
-        <input
-          type="text"
-          id="usernameInput"
-          placeholder="Kullanıcı Adı Gir..."
-        />
-      </div>
-      <button id="loginBtn" class="login-button">
-        Giriş Yap ✈
-      </button>
     </div>
-  </div>
 
-  <!-- Sohbet kutusu -->
-  <div class="chat-container blur" id="chatContainer">
-    <h2>Sohbet</h2>
+    <!-- MESAJLAR -->
+    <ul id="messages"></ul>
 
-    <ul class="messages"></ul>
-
-    <div class="input">
-      <input type="text" id="msgInput" placeholder="Mesaj yaz..." />
-      <button id="sendBtn">➤</button>
+    <!-- GÖNDERME ALANI -->
+    <div class="input-area">
+        <input id="messageInput" type="text" placeholder="Mesaj yaz..." autocomplete="off">
+        <button id="sendBtn">➤</button>
     </div>
-  </div>
+</div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="script.js"></script>
+
 </body>
 </html>
