@@ -267,3 +267,39 @@ ul.messages li.message.mine {
   transform: translateY(-1px);
   box-shadow: 0 11px 30px rgba(34, 229, 111, 0.55);
 }
+
+/* --- LOBİ BUTONLARI --- */
+.lobbies {
+  display: flex;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #131921;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  overflow-x: auto; /* Mobilde yana kaydırma */
+}
+
+.lobby-btn {
+  background: #1f2933;
+  border: 1px solid #343b48;
+  color: #9ba4b4;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.lobby-btn:hover {
+  background: #283442;
+  color: #fff;
+}
+
+/* Aktif Lobi Stili */
+.lobby-btn.active {
+  background: #22e56f;
+  color: #051108;
+  font-weight: 700;
+  border-color: #22e56f;
+  box-shadow: 0 0 10px rgba(34, 229, 111, 0.3);
+}
