@@ -132,18 +132,19 @@ body {
 
 /* Sohbet kutusu */
 .chat-container {
-  width: 650px;           /* GENİŞLİK ARTTI */
-  max-width: 95vw;
-  height: 80vh;
-  background: #10151c;
-  border-radius: 18px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  overflow: hidden;
+    width: 90%;          /* 75% → 90% yap */
+    max-width: 1400px;   /* 1100px → 1400px yap */
+    height: 85vh;
+    margin: 40px auto;
+    background: rgba(0,0,0,0.50);
+    border-radius: 14px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 40px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
+
 
 .chat-container h2 {
   padding: 14px 16px;
