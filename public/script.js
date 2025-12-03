@@ -2,7 +2,7 @@ const socket = io();
 
 let username = "";
 
-// İlk girişte kullanıcı adı sor
+// ✔ Kullanıcı adı popup ile soruluyor
 while (!username) {
     username = prompt("Kullanıcı adınız:");
 }
@@ -16,7 +16,7 @@ input.addEventListener("keypress", e => {
     if (e.key === "Enter") sendMessage();
 });
 
-// MESAJ GÖNDER
+// ✔ MESAJ GÖNDER
 function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
@@ -30,22 +30,25 @@ function sendMessage() {
     input.value = "";
 }
 
-// SAAT DOĞRU FORMAT
+// ✔ SAAT DOĞRU TR FORMATINDA
 function getTime() {
     const now = new Date();
     return now.toLocaleTimeString("tr-TR", {
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
+        hour12: false
     });
 }
 
-// MESAJ ALMA
+// ✔ MESAJ ALMA
 socket.on("chatMessage", data => {
     const li = document.createElement("li");
     li.classList.add("message");
 
-    if (data.user === username) li.classList.add("you");
-    else li.classList.add("other");
+    if (data.user === username)
+        li.classList.add("you");
+    else
+        li.classList.add("other");
 
     li.innerHTML = `
         <b>${data.user}</b>: ${data.msg}
