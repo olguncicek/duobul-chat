@@ -3,54 +3,72 @@ const app = express();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 
+const PORT = process.env.PORT || 8080;
+
+// Public klasörü aç
 app.use(express.static("public"));
 
+// Ana sayfa
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/public/duo.html");
+});
+
+// Kullanıcılar
+let users = {};
+
+// Yeni bağlantı
 io.on("connection", socket => {
-    console.log("Bir kullanıcı bağlandı.");
+    console.log("Bir kullanıcı bağlandı:", socket.id);
 
-    // Kullanıcı odaya katılıyor
-    socket.on("joinRoom", ({ username, room }) => {
-        socket.username = username;
-        socket.room = room;
+    // Kullanıcı giriş yapınca
+    socket.on("setUsername", username => {
+        users[socket.id] = { username, room: "genel" };
+        socket.join("genel");
 
+        // Odaya bilgi gönder
+        io.to("genel").emit("userStatus", {
+            user: username,
+            status: "online"
+        });
+    });
+
+    // Oda değiştirme
+    socket.on("changeRoom", room => {
+        const user = users[socket.id];
+        if (!user) return;
+
+        socket.leave(user.room);
         socket.join(room);
 
-        console.log(`${username} -> ${room} odasına girdi`);
-
-        // Odaya kullanıcı giriş mesajı
-        socket.to(room).emit("systemMessage", {
-            msg: `${username} sohbete katıldı.`,
-            time: getTime()
-        });
+        users[socket.id].room = room;
     });
 
     // Mesaj gönderme
-    socket.on("chatMessage", ({ room, user, msg }) => {
-        io.to(room).emit("chatMessage", {
-            user,
-            msg,
-            time: getTime()
+    socket.on("chatMessage", data => {
+        const user = users[socket.id];
+        if (!user) return;
+
+        io.to(user.room).emit("chatMessage", {
+            user: user.username,
+            msg: data.msg,
+            time: data.time
         });
     });
 
-    // Ayrılınca mesaj
+    // Kullanıcı çıkınca
     socket.on("disconnect", () => {
-        if (!socket.username || !socket.room) return;
+        const user = users[socket.id];
+        if (!user) return;
 
-        io.to(socket.room).emit("systemMessage", {
-            msg: `${socket.username} sohbetten ayrıldı.`,
-            time: getTime()
+        io.to(user.room).emit("userStatus", {
+            user: user.username,
+            status: "offline"
         });
+
+        delete users[socket.id];
     });
 });
 
-function getTime() {
-    const now = new Date();
-    return now.toLocaleTimeString("tr-TR", {
-        hour: "2-digit",
-        minute: "2-digit"
-    });
-}
-
-const PORT = process.env.PORT || 8080;
-http.listen(PORT, () => console.log("Sunucu çalışıyor: " + PORT));
+http.listen(PORT, () => {
+    console.log(`Sunucu çalışıyor → Port: ${PORT}`);
+});
