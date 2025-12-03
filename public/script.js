@@ -1,119 +1,57 @@
 const socket = io();
 
-const loginModal = document.getElementById("loginModal");
-const usernameInput = document.getElementById("usernameInput");
-const loginBtn = document.getElementById("loginBtn");
-const chatContainer = document.getElementById("chatContainer");
+let username = "";
 
-const msgInput = document.getElementById("msgInput");
+// İlk girişte kullanıcı adı sor
+while (!username) {
+    username = prompt("Kullanıcı adınız:");
+}
+
+const input = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
-const messagesUl = document.querySelector(".messages");
+const messagesList = document.getElementById("messages");
 
-let myUsername = "";
-const userStatusMap = {}; // username -> "online" / "offline"
-
-/* ---------- GİRİŞ / KULLANICI ADI ---------- */
-
-function doLogin() {
-  const name = usernameInput.value.trim();
-  if (!name) return;
-  myUsername = name;
-  socket.emit("setUsername", myUsername);
-
-  loginModal.classList.add("hidden");
-  chatContainer.classList.remove("blur");
-  msgInput.focus();
-}
-
-loginBtn.addEventListener("click", doLogin);
-usernameInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") doLogin();
+sendBtn.onclick = sendMessage;
+input.addEventListener("keypress", e => {
+    if (e.key === "Enter") sendMessage();
 });
 
-/* ---------- MESAJ GÖNDERME ---------- */
-
+// MESAJ GÖNDER
 function sendMessage() {
-  const text = msgInput.value.trim();
-  if (!text || !myUsername) return;
+    const text = input.value.trim();
+    if (!text) return;
 
-  // SAATİ HERKİSİN BİLGİSAYARINDA YEREL OLARAK HESAPLA
-  const time = new Date().toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  });
+    socket.emit("chatMessage", {
+        user: username,
+        msg: text,
+        time: getTime()
+    });
 
-  socket.emit("sendMessage", { text, time });
-  msgInput.value = "";
+    input.value = "";
 }
 
-sendBtn.addEventListener("click", sendMessage);
-msgInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") sendMessage();
-});
-
-/* ---------- MESAJ ALMA ---------- */
-
-socket.on("newMessage", (data) => {
-  const { username, text, time } = data;
-  addMessage(username, text, time);
-});
-
-function addMessage(username, text, time) {
-  const li = document.createElement("li");
-  li.classList.add("message");
-  if (username === myUsername) {
-    li.classList.add("mine");
-  }
-  li.dataset.username = username;
-
-  const header = document.createElement("div");
-  header.classList.add("message-header");
-
-  const dot = document.createElement("span");
-  dot.classList.add("status-dot");
-  // Kullanıcının son bilinen durumuna göre renk
-  if (userStatusMap[username] === "offline") {
-    dot.classList.add("offline");
-  }
-
-  const sender = document.createElement("span");
-  sender.classList.add("sender");
-  sender.textContent = username;
-
-  const date = document.createElement("span");
-  date.classList.add("date");
-  date.textContent = time;
-
-  header.appendChild(dot);
-  header.appendChild(sender);
-  header.appendChild(date);
-
-  const textP = document.createElement("p");
-  textP.classList.add("text");
-  textP.textContent = text;
-
-  li.appendChild(header);
-  li.appendChild(textP);
-
-  messagesUl.appendChild(li);
-  messagesUl.scrollTop = messagesUl.scrollHeight;
+// SAAT DOĞRU FORMAT
+function getTime() {
+    const now = new Date();
+    return now.toLocaleTimeString("tr-TR", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
 }
 
-/* ---------- ONLINE / OFFLINE NOKTA RENKLERİ ---------- */
+// MESAJ ALMA
+socket.on("chatMessage", data => {
+    const li = document.createElement("li");
+    li.classList.add("message");
 
-socket.on("userStatus", ({ username, online }) => {
-  userStatusMap[username] = online ? "online" : "offline";
+    if (data.user === username) li.classList.add("you");
+    else li.classList.add("other");
 
-  const dots = document.querySelectorAll(
-    `li.message[data-username="${username}"] .status-dot`
-  );
+    li.innerHTML = `
+        <b>${data.user}</b>: ${data.msg}
+        <span class="time">${data.time}</span>
+    `;
 
-  dots.forEach((dot) => {
-    if (online) {
-      dot.classList.remove("offline");
-    } else {
-      dot.classList.add("offline");
-    }
-  });
+    messagesList.appendChild(li);
+    messagesList.scrollTop = messagesList.scrollHeight;
 });
