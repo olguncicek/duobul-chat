@@ -1,38 +1,51 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DuoBul Sohbet</title>
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DuoBul Sohbet</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-<div class="chat-container">
-
-    <!-- KULLANICI ADI POPUP -->
-    <div id="usernamePopup" class="popup">
-        <div class="popup-box">
-            <h2>Kullanıcı Adı</h2>
-            <input type="text" id="usernameInput" placeholder="Kullanıcı adınız..." />
-            <button id="saveUsername">Giriş Yap</button>
+  <!-- Giriş ekranı -->
+  <div id="loginModal" class="login-modal">
+    <div class="login-card">
+      <div class="logo-area">
+        <div class="logo-circle"></div>
+        <div class="logo-texts">
+          <div class="logo-title">DuoBul</div>
+          <div class="logo-subtitle">OYUNCU ARKADAŞINI BUL</div>
         </div>
+      </div>
+      <p class="login-tagline">Anında Bağlan, Hemen Oyna.</p>
+
+      <div class="login-input-group">
+        <input
+          type="text"
+          id="usernameInput"
+          placeholder="Kullanıcı Adı Gir..."
+        />
+      </div>
+      <button id="loginBtn" class="login-button">
+        Giriş Yap ✈
+      </button>
     </div>
+  </div>
 
-    <!-- MESAJ LİSTESİ -->
-    <ul id="messages"></ul>
+  <!-- Sohbet kutusu -->
+  <div class="chat-container blur" id="chatContainer">
+    <h2>Sohbet</h2>
 
-    <!-- MESAJ GİRİŞİ -->
-    <div class="input-area">
-        <input id="messageInput" type="text" placeholder="Mesaj yaz..." autocomplete="off" />
-        <button id="sendBtn">➤</button>
+    <ul class="messages"></ul>
+
+    <div class="input">
+      <input type="text" id="msgInput" placeholder="Mesaj yaz..." />
+      <button id="sendBtn">➤</button>
     </div>
+  </div>
 
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="script.js"></script>
-
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
