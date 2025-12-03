@@ -13,7 +13,51 @@ let myUsername = "";
 const userStatusMap = {}; // username -> "online" / "offline"
 
 /* ---------- GİRİŞ / KULLANICI ADI ---------- */
+/* ---------- MEVCUT KODLARININ ÜSTÜNE EKLE/GÜNCELLE ---------- */
 
+// Global değişken
+let currentRoom = "genel";
+
+// Lobi butonlarını seç
+const lobbyBtns = document.querySelectorAll(".lobby-btn");
+
+// Her butona tıklama olayı ekle
+lobbyBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const roomName = btn.dataset.room;
+    
+    // Zaten bu odadaysak işlem yapma
+    if (roomName === currentRoom) return;
+
+    // 1. Aktif sınıfını güncelle (görsel değişim)
+    document.querySelector(".lobby-btn.active").classList.remove("active");
+    btn.classList.add("active");
+
+    // 2. Mesaj ekranını temizle (yeni odaya temiz sayfa)
+    messagesUl.innerHTML = "";
+    
+    // 3. Odayı değiştir
+    currentRoom = roomName;
+    socket.emit("joinRoom", currentRoom);
+    
+    // İstersen buraya bir "Hoşgeldin" mesajı ekleyebilirsin (istemci tarafında)
+    addSystemMessage(`${btn.innerText} odasına geçiş yapıldı.`);
+  });
+});
+
+// Yardımcı Fonksiyon: Sistem mesajı (sarı renkli vs. yapabilirsin istersen)
+function addSystemMessage(text) {
+    const li = document.createElement("li");
+    li.classList.add("message");
+    li.style.background = "transparent";
+    li.style.color = "#8ad0ff";
+    li.style.fontStyle = "italic";
+    li.style.textAlign = "center";
+    li.textContent = text;
+    messagesUl.appendChild(li);
+}
+
+// ... sendMessage ve diğer kodların aynı kalabilir ...
 function doLogin() {
   const name = usernameInput.value.trim();
   if (!name) return;
