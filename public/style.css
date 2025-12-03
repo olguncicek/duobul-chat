@@ -1,276 +1,114 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
-}
-
-/* Arka plan */
+/* ARKAPLAN */
 body {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at top left, #1b2838, #060b10);
-  color: #fff;
+    margin: 0;
+    padding: 0;
+    background: url("image/i.jpg") no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* Bulanık efekt */
-.blur {
-  filter: blur(4px);
-  pointer-events: none;
+/* SOHBET KUTUSU */
+.chat-container {
+    width: 75%;
+    max-width: 1100px;
+    height: 85vh;
+    margin: 40px auto;
+    background: rgba(0,0,0,0.50);
+    border-radius: 14px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 40px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-/* Giriş Modalı */
-.login-modal {
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(circle at top left, #1b2838, #060b10);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-}
-
-.login-modal.hidden {
-  display: none;
-}
-
-.login-card {
-  width: 360px;
-  padding: 24px 28px 30px;
-  border-radius: 18px;
-  background: #171b22;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.logo-area {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.logo-circle {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #19e5ff, #1eff8b);
-  box-shadow: 0 0 20px rgba(25, 229, 255, 0.6);
-  margin-right: 10px;
-}
-
-.logo-texts {
-  display: flex;
-  flex-direction: column;
-}
-
-.logo-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: #1eff8b;
-}
-
-.logo-subtitle {
-  font-size: 11px;
-  letter-spacing: 1px;
-  color: #9ba4b4;
-}
-
-.login-tagline {
-  margin-bottom: 18px;
-  font-size: 14px;
-  color: #cbd5f5;
-}
-
-.logo {
+/* ÜST LOGO BAR */
+.chat-header {
+    width: 100%;
+    padding: 15px 25px;
+    background: rgba(0,0,0,0.45);
     display: flex;
     align-items: center;
-    gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-.logo-img {
-    height: 45px;           /* logonun yüksekliği */
-    width: auto;            /* oranı koru */
-    border-radius: 8px;     /* istersen yuvarlak yap: 50% */
-    object-fit: contain;    /* bozulmadan sığsın */
-    filter: drop-shadow(0 0 8px rgba(0, 255, 180, 0.6));
+/* LOGO */
+.site-logo {
+    height: 36px;      /* eski ikon ile aynı yükseklik */
+    width: auto;       /* orantılı küçültme */
+    object-fit: contain;
 }
 
-
-.login-input-group {
-  margin-bottom: 16px;
+/* MESAJ LİSTESİ */
+#messages {
+    flex: 1;
+    list-style-type: none;
+    margin: 0;
+    padding: 20px;
+    overflow-y: auto;
 }
 
-.login-input-group input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #343b48;
-  background: #0f141b;
-  color: #e5ecff;
-  outline: none;
+.message {
+    max-width: 60%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    color: white;
+    position: relative;
+    font-size: 15px;
 }
 
-.login-input-group input::placeholder {
-  color: #6c7484;
+/* KENDİ MESAJIN */
+.message.you {
+    background: #00c853;
+    margin-left: auto;
+    border-bottom-right-radius: 0;
 }
 
-.login-button {
-  width: 100%;
-  padding: 10px 0;
-  margin-top: 4px;
-  border: none;
-  border-radius: 12px;
-  background: #22e56f;
-  color: #051108;
-  font-weight: 700;
-  font-size: 15px;
-  cursor: pointer;
-  box-shadow: 0 12px 35px rgba(34, 229, 111, 0.35);
-  transition: transform 0.08s ease, box-shadow 0.08s ease,
-    background 0.1s ease;
+/* DİĞERLERİ */
+.message.other {
+    background: #424242;
+    border-bottom-left-radius: 0;
 }
 
-.login-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 40px rgba(34, 229, 111, 0.48);
-  background: #26f377;
+/* MESAJ SAATİ */
+.time {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-left: 6px;
 }
 
-/* Sohbet kutusu */
-.chat-container {
-  width: 650px;           /* GENİŞLİK ARTTI */
-  max-width: 95vw;
-  height: 80vh;
-  background: #10151c;
-  border-radius: 18px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  overflow: hidden;
+/* GÖNDERME ALANI */
+.input-area {
+    display: flex;
+    padding: 12px;
+    background: rgba(0,0,0,0.55);
+    border-top: 1px solid rgba(255,255,255,0.1);
 }
 
-.chat-container h2 {
-  padding: 14px 16px;
-  background: #181f29;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  font-size: 18px;
+.input-area input {
+    flex: 1;
+    padding: 12px;
+    background: #111;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 15px;
+    outline: none;
 }
 
-/* Mesaj listesi */
-ul.messages {
-  flex-grow: 1;
-  list-style: none;
-  padding: 12px 14px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.input-area button {
+    background: #00e676;
+    padding: 0 22px;
+    margin-left: 10px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #000;
+    transition: .2s;
 }
 
-/* Mesaj balonu */
-ul.messages li.message {
-  background: #161f29;
-  padding: 7px 10px 8px;
-  max-width: 80%;
-  border-radius: 10px;
-  border-top-left-radius: 4px;
-  position: relative;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  color: #f1f5ff;
-}
-
-ul.messages li.message.mine {
-  align-self: flex-end;
-  background: #1e3132;
-  border-top-right-radius: 4px;
-}
-
-/* Üst bilgi satırı */
-.message-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 3px;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 6px;
-  background: #22e56f;
-}
-
-.status-dot.offline {
-  background: #e84545;
-}
-
-.sender {
-  font-size: 11px;
-  font-weight: 700;
-  color: #8ad0ff;
-  margin-right: 6px;
-}
-
-.message.mine .sender {
-  color: #9cf6c3;
-}
-
-.date {
-  margin-left: auto;
-  font-size: 10px;
-  color: #97a2b8;
-}
-
-/* Mesaj metni */
-.text {
-  font-size: 13px;
-  line-height: 1.3rem;
-}
-
-/* Alt input alanı */
-.input {
-  display: flex;
-  padding: 8px 10px;
-  background: #181f29;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-  gap: 6px;
-}
-
-.input input {
-  flex: 1;
-  padding: 9px 10px;
-  border-radius: 999px;
-  border: none;
-  background: #0f141b;
-  color: #e5ecff;
-  outline: none;
-}
-
-.input input::placeholder {
-  color: #6c7484;
-}
-
-.input button {
-  width: 46px;
-  border-radius: 999px;
-  border: none;
-  background: #22e56f;
-  color: #051108;
-  font-weight: 700;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(34, 229, 111, 0.4);
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
-}
-
-.input button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 11px 30px rgba(34, 229, 111, 0.55);
+.input-area button:hover {
+    background: #00ff80;
 }
