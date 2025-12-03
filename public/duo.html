@@ -2,43 +2,35 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DuoBul Sohbet</title>
+    <title>DuoBul Chat</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <!-- GİRİŞ EKRANI -->
-<div id="loginScreen" class="login-screen">
-    <div class="login-card">
-        <h2>Bir kullanıcı adı seç:</h2>
-        <input id="usernameInput" type="text" placeholder="Kullanıcı adı...">
-        <button id="loginBtn">Giriş Yap</button>
-    </div>
+<div id="login-screen" class="login-card">
+    <h2>Bir kullanıcı adı seç:</h2>
+    <input id="usernameInput" type="text" placeholder="Kullanıcı adı...">
+    <button id="loginBtn">Giriş Yap</button>
 </div>
 
-<!-- SOHBET EKRANI -->
-<div id="chatScreen" class="chat-screen hidden">
+<!-- SOHBET ANA EKRAN -->
+<div id="chat-screen" class="chat-container hidden">
 
-    <!-- OYUN MENÜSÜ -->
-    <div class="room-menu">
-        <button data-room="valorant">Valorant</button>
-        <button data-room="lol">League of Legends</button>
-        <button data-room="cs2">CS2</button>
-        <button data-room="rust">Rust</button>
-        <button data-room="pubg">PUBG</button>
-        <button data-room="genel">Genel Sohbet</button>
+    <div class="room-bar">
+        <button class="room" data-room="valorant">🟥 Valorant</button>
+        <button class="room" data-room="lol">🟡 LoL</button>
+        <button class="room" data-room="cs2">🔫 CS2</button>
+        <button class="room" data-room="rust">🪓 Rust</button>
+        <button class="room" data-room="pubg">🐔 PUBG</button>
+        <button class="room" data-room="genel">💬 Genel Sohbet</button>
     </div>
 
-    <!-- SOHBET KUTUSU -->
-    <div class="chat-container">
-        <ul id="messages"></ul>
+    <ul id="messages"></ul>
 
-        <div class="input-area">
-            <input id="messageInput" type="text" placeholder="Mesaj yaz...">
-            <button id="sendBtn">➤</button>
-        </div>
+    <div class="input-area">
+        <input id="messageInput" placeholder="Mesaj yaz...">
+        <button id="sendBtn">➤</button>
     </div>
 </div>
 
