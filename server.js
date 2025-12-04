@@ -10,55 +10,54 @@ const io = new Server(server, {
   }
 });
 
-// Statik dosyalar (HTML, CSS, JS) public klasöründen sunulur
+// Statik dosyaları sun
 app.use(express.static(__dirname + "/public"));
 
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public/duo.html");
 });
 
-// --- VERİ YAPILARI ---
+// --- VERİ HAVUZU ---
 const users = new Map(); // Kullanıcı Adı -> Bağlantı Sayısı
-const roomMessages = {}; // Oda Adı -> Mesaj Listesi []
+const roomMessages = {}; // Oda Adı -> Mesajlar Dizisi []
 
 io.on("connection", (socket) => {
   console.log("Bir kullanıcı bağlandı");
   
   let username = null;
-  let currentRoom = "genel"; // Herkes varsayılan olarak "genel" odasında başlar
+  let currentRoom = "genel"; // Varsayılan oda
   socket.join("genel");
 
-  // 1. KULLANICI GİRİŞİ
+  // 1. KULLANICI GİRİŞ YAPTIĞINDA
   socket.on("setUsername", (name) => {
     if (!name) return;
     username = name.trim();
     if (!username) return;
 
-    // Kullanıcı sayısını güncelle
+    // Kullanıcıyı kaydet
     const count = users.get(username) || 0;
     users.set(username, count + 1);
 
-    // Herkese bu kullanıcının ONLİNE olduğunu bildir
+    // A) Herkese "Bu kişi ONLINE oldu" de
     io.emit("userStatus", { username, online: true });
 
-    // Kullanıcıya girdiği odanın (genel) geçmiş mesajlarını yükle
+    // B) [YENİ] Yeni giren kişiye "Şu an içeride bunlar var" listesini gönder
+    const onlineUsersList = Array.from(users.keys());
+    socket.emit("activeUsersList", onlineUsersList);
+
+    // C) Girdiği odanın (genel) geçmiş mesajlarını yükle
     if (roomMessages["genel"]) {
       socket.emit("loadHistory", roomMessages["genel"]);
     }
   });
 
-  // 2. ODA DEĞİŞTİRME (LOBİ SİSTEMİ)
+  // 2. ODA DEĞİŞTİRME
   socket.on("joinRoom", (roomName) => {
-    // Eski odadan çık
     socket.leave(currentRoom);
-    
-    // Yeni odaya gir
     socket.join(roomName);
     currentRoom = roomName;
 
-    console.log(`${username} kullanıcısı ${roomName} odasına geçti.`);
-
-    // Yeni odanın geçmiş mesajlarını sadece bu kullanıcıya gönder
+    // Odanın geçmiş mesajlarını sadece bu kullanıcıya gönder
     if (roomMessages[roomName]) {
       socket.emit("loadHistory", roomMessages[roomName]);
     }
@@ -68,38 +67,32 @@ io.on("connection", (socket) => {
   socket.on("sendMessage", (data) => {
     if (!username) return;
     const { text, time } = data;
-    if (!text || !time) return;
 
-    const msg = {
-      username,
-      text,
-      time
-    };
+    const msg = { username, text, time };
 
-    // A) Mesajı sunucu hafızasına kaydet (Geçmiş için)
+    // Mesajı sunucu hafızasına kaydet (Geçmiş için)
     if (!roomMessages[currentRoom]) {
       roomMessages[currentRoom] = [];
     }
     roomMessages[currentRoom].push(msg);
 
-    // Hafıza şişmesin diye son 50 mesajı tutalım
+    // Son 50 mesajı tut, fazlasını sil
     if (roomMessages[currentRoom].length > 50) {
-      roomMessages[currentRoom].shift(); // En eski mesajı sil
+      roomMessages[currentRoom].shift();
     }
 
-    // B) Mesajı SADECE o odadaki kişilere gönder
+    // Mesajı o odadakilere gönder
     io.to(currentRoom).emit("newMessage", msg);
   });
 
-  // 4. BAĞLANTI KOPMASI
+  // 4. ÇIKIŞ YAPMA
   socket.on("disconnect", () => {
-    console.log("Bir kullanıcı ayrıldı");
     if (!username) return;
 
     const count = users.get(username) || 0;
     if (count <= 1) {
       users.delete(username);
-      // Herkese bu kullanıcının OFFLINE olduğunu bildir
+      // Herkese "Bu kişi OFFLINE oldu" de
       io.emit("userStatus", { username, online: false });
     } else {
       users.set(username, count - 1);
