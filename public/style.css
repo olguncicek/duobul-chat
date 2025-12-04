@@ -400,3 +400,7 @@ ul.messages::-webkit-scrollbar-thumb:hover,
 .lobbies::-webkit-scrollbar-thumb:hover {
   background: #22e56f; /* Tema rengin */
 }
+
+.login-input-group:focus{
+  border-color:green;
+}
