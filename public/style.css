@@ -311,8 +311,14 @@ ul.messages li.message.mine {
   object-fit: contain;     /* Resmi bozmadan sığdır */
   display: block;
   background-color: transparent !important;
-  
 }
+  .lobby-btn.game-val {
+    width:20px;
+    height:20px;
+    background-color: transparent !important;
+
+}
+
 /* GENEL  */
 .lobby-btn.active {
     background: #00a8ff; /* Canlı bir gökyüzü mavisi */
