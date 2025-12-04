@@ -377,6 +377,10 @@ ul.messages::-webkit-scrollbar,
   height: 8px; /* Yatay çubuk yüksekliği */
 }
 
+.val {
+  background-color: transparent !important;
+  ]
+
 /* Çubuğun arka plan yolu */
 ul.messages::-webkit-scrollbar-track,
 .lobbies::-webkit-scrollbar-track {
