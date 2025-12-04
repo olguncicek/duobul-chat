@@ -310,6 +310,29 @@ ul.messages li.message.mine {
   border: none !important;
 }
 
+.lobby-btn.game-val.active {
+    background: #ff4655;
+    border-color: #ff4655;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255, 70, 85, 0.4);
+}
+
+/* League of Legends (Mavi/Hextech) */
+.lobby-btn.game-lol.active {
+    background: #0ac8b9;
+    border-color: #0ac8b9;
+    color: #000;
+    box-shadow: 0 0 15px rgba(10, 200, 185, 0.4);
+}
+
+/* CS2 (Turuncu) */
+.lobby-btn.game-cs.active {
+    background: #de9b35;
+    border-color: #de9b35;
+    color: #000;
+    box-shadow: 0 0 15px rgba(222, 155, 53, 0.4);
+}
+
 /* Aktif Lobi Stili */
 .lobby-btn.active {
   background: #22e56f;
