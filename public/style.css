@@ -288,11 +288,23 @@ ul.messages li.message.mine {
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* İçeriği ortalar */
+  gap: 8px;
 }
 
 .lobby-btn:hover {
   background: #283442;
   color: #fff;
+  transform: translateY(-2px); /* Hafif yukarı kalkma efekti */
+}
+
+.lobby-btn img {
+  width: 24px !important;  /* Genişlik sabit */
+  height: 24px !important; /* Yükseklik sabit */
+  object-fit: contain;     /* Resmi bozmadan sığdır */
+  display: block;
 }
 
 /* Aktif Lobi Stili */
