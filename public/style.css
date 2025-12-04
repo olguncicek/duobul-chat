@@ -362,7 +362,7 @@ ul.messages li.message.mine {
     border-color: #15f563;
     color: #081a10; /* Yazı koyu olsun ki okunsun */
     box-shadow: 0 0 15px rgba(21, 245, 99, 0.4);
-    font-weight: 800;
+    
 }
 
 /* ARC Raiders (Retro Sci-Fi Turuncu/Kırmızı) */
@@ -371,7 +371,7 @@ ul.messages li.message.mine {
     border-color: #ff3f1a;
     color: #fff;
     box-shadow: 0 0 15px rgba(255, 63, 26, 0.5);
-    letter-spacing: 1px; /* ARC logosu gibi biraz aralıklı */
+    
 }
 /* --- MODERN KAYDIRMA ÇUBUĞU (SCROLLBAR) --- */
 
