@@ -151,6 +151,7 @@ body {
   background: #181f29;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   font-size: 18px;
+  flex-shrink: 0;
 }
 
 /* Mesaj listesi */
@@ -276,6 +277,7 @@ ul.messages li.message.mine {
   background: #131921;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   overflow-x: auto; /* Mobilde yana kaydırma */
+  flex-shrink: 0;
 }
 
 .lobby-btn {
@@ -352,4 +354,32 @@ ul.messages li.message.mine {
     color: #fff;
     box-shadow: 0 0 15px rgba(255, 63, 26, 0.5);
     letter-spacing: 1px; /* ARC logosu gibi biraz aralıklı */
+}
+/* --- MODERN KAYDIRMA ÇUBUĞU (SCROLLBAR) --- */
+
+/* Mesaj kutusu ve lobiler için */
+ul.messages::-webkit-scrollbar,
+.lobbies::-webkit-scrollbar {
+  width: 8px;  /* Dikey çubuk genişliği */
+  height: 8px; /* Yatay çubuk yüksekliği */
+}
+
+/* Çubuğun arka plan yolu */
+ul.messages::-webkit-scrollbar-track,
+.lobbies::-webkit-scrollbar-track {
+  background: #0f141a; 
+  border-radius: 4px;
+}
+
+/* Hareket eden çubuk kısmı */
+ul.messages::-webkit-scrollbar-thumb,
+.lobbies::-webkit-scrollbar-thumb {
+  background: #343b48; 
+  border-radius: 4px;
+}
+
+/* Üzerine gelince rengi değişsin */
+ul.messages::-webkit-scrollbar-thumb:hover,
+.lobbies::-webkit-scrollbar-thumb:hover {
+  background: #22e56f; /* Tema rengin */
 }
