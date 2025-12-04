@@ -1,5 +1,6 @@
 const socket = io();
 
+// HTML Elementlerini Seçelim
 const loginModal = document.getElementById("loginModal");
 const usernameInput = document.getElementById("usernameInput");
 const loginBtn = document.getElementById("loginBtn");
@@ -8,62 +9,22 @@ const chatContainer = document.getElementById("chatContainer");
 const msgInput = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
 const messagesUl = document.querySelector(".messages");
+const lobbyBtns = document.querySelectorAll(".lobby-btn"); // Lobi butonları
 
 let myUsername = "";
+let currentRoom = "genel"; // Varsayılan oda
 const userStatusMap = {}; // username -> "online" / "offline"
 
-/* ---------- GİRİŞ / KULLANICI ADI ---------- */
-/* ---------- MEVCUT KODLARININ ÜSTÜNE EKLE/GÜNCELLE ---------- */
-
-// Global değişken
-let currentRoom = "genel";
-
-// Lobi butonlarını seç
-const lobbyBtns = document.querySelectorAll(".lobby-btn");
-
-// Her butona tıklama olayı ekle
-lobbyBtns.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const roomName = btn.dataset.room;
-    
-    // Zaten bu odadaysak işlem yapma
-    if (roomName === currentRoom) return;
-
-    // 1. Aktif sınıfını güncelle (görsel değişim)
-    document.querySelector(".lobby-btn.active").classList.remove("active");
-    btn.classList.add("active");
-
-    // 2. Mesaj ekranını temizle (yeni odaya temiz sayfa)
-    messagesUl.innerHTML = "";
-    
-    // 3. Odayı değiştir
-    currentRoom = roomName;
-    socket.emit("joinRoom", currentRoom);
-    
-    // İstersen buraya bir "Hoşgeldin" mesajı ekleyebilirsin (istemci tarafında)
-    addSystemMessage(`${btn.innerText} odasına geçiş yapıldı.`);
-  });
-});
-
-// Yardımcı Fonksiyon: Sistem mesajı (sarı renkli vs. yapabilirsin istersen)
-function addSystemMessage(text) {
-    const li = document.createElement("li");
-    li.classList.add("message");
-    li.style.background = "transparent";
-    li.style.color = "#8ad0ff";
-    li.style.fontStyle = "italic";
-    li.style.textAlign = "center";
-    li.textContent = text;
-    messagesUl.appendChild(li);
-}
-
-// ... sendMessage ve diğer kodların aynı kalabilir ...
+/* ---------- 1. GİRİŞ İŞLEMLERİ ---------- */
 function doLogin() {
   const name = usernameInput.value.trim();
   if (!name) return;
   myUsername = name;
+  
+  // Sunucuya kullanıcı adını bildir
   socket.emit("setUsername", myUsername);
 
+  // Modalı gizle, sohbeti aç
   loginModal.classList.add("hidden");
   chatContainer.classList.remove("blur");
   msgInput.focus();
@@ -74,21 +35,42 @@ usernameInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") doLogin();
 });
 
-/* ---------- MESAJ GÖNDERME ---------- */
+/* ---------- 2. LOBİ / ODA DEĞİŞTİRME ---------- */
+lobbyBtns.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const roomName = btn.dataset.room;
 
+    // Eğer zaten o odadaysak hiçbir şey yapma
+    if (roomName === currentRoom) return;
+
+    // Görsel olarak aktif butonu değiştir
+    document.querySelector(".lobby-btn.active").classList.remove("active");
+    btn.classList.add("active");
+
+    // Ekranı temizle (Yeni oda temiz sayfa)
+    messagesUl.innerHTML = "";
+
+    // Odayı değiştir
+    currentRoom = roomName;
+    socket.emit("joinRoom", currentRoom);
+  });
+});
+
+/* ---------- 3. MESAJ GÖNDERME ---------- */
 function sendMessage() {
   const text = msgInput.value.trim();
   if (!text || !myUsername) return;
 
-  // SAATİ HERKİSİN BİLGİSAYARINDA YEREL OLARAK HESAPLA
   const time = new Date().toLocaleTimeString("tr-TR", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false
   });
 
+  // Mesajı sunucuya gönder
   socket.emit("sendMessage", { text, time });
   msgInput.value = "";
+  msgInput.focus();
 }
 
 sendBtn.addEventListener("click", sendMessage);
@@ -96,16 +78,29 @@ msgInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendMessage();
 });
 
-/* ---------- MESAJ ALMA ---------- */
+/* ---------- 4. MESAJ ALMA VE GÖSTERME ---------- */
 
-socket.on("newMessage", (data) => {
-  const { username, text, time } = data;
-  addMessage(username, text, time);
+// A) Yeni bir mesaj geldiğinde
+socket.on("newMessage", (msg) => {
+  addMessage(msg.username, msg.text, msg.time);
 });
 
+// B) Geçmiş mesajları yükle dendiğinde (Oda değişince)
+socket.on("loadHistory", (messages) => {
+  messagesUl.innerHTML = ""; // Garanti olsun diye temizle
+  messages.forEach((msg) => {
+    addMessage(msg.username, msg.text, msg.time);
+  });
+  // En alta kaydır
+  messagesUl.scrollTop = messagesUl.scrollHeight;
+});
+
+// Ekrana Mesaj Ekleyen Yardımcı Fonksiyon
 function addMessage(username, text, time) {
   const li = document.createElement("li");
   li.classList.add("message");
+  
+  // Eğer mesaj benimse 'mine' sınıfı ekle (sağa yaslar)
   if (username === myUsername) {
     li.classList.add("mine");
   }
@@ -114,9 +109,9 @@ function addMessage(username, text, time) {
   const header = document.createElement("div");
   header.classList.add("message-header");
 
+  // Online/Offline Durum Noktası
   const dot = document.createElement("span");
   dot.classList.add("status-dot");
-  // Kullanıcının son bilinen durumuna göre renk
   if (userStatusMap[username] === "offline") {
     dot.classList.add("offline");
   }
@@ -141,23 +136,21 @@ function addMessage(username, text, time) {
   li.appendChild(textP);
 
   messagesUl.appendChild(li);
+  
+  // Otomatik aşağı kaydır
   messagesUl.scrollTop = messagesUl.scrollHeight;
 }
 
-/* ---------- ONLINE / OFFLINE NOKTA RENKLERİ ---------- */
-
+/* ---------- 5. ONLINE / OFFLINE DURUMU ---------- */
 socket.on("userStatus", ({ username, online }) => {
   userStatusMap[username] = online ? "online" : "offline";
 
+  // Ekrandaki eski mesajlardaki noktaların rengini güncelle
   const dots = document.querySelectorAll(
     `li.message[data-username="${username}"] .status-dot`
   );
-
   dots.forEach((dot) => {
-    if (online) {
-      dot.classList.remove("offline");
-    } else {
-      dot.classList.add("offline");
-    }
+    if (online) dot.classList.remove("offline");
+    else dot.classList.add("offline");
   });
 });
