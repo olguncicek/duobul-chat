@@ -401,6 +401,6 @@ ul.messages::-webkit-scrollbar-thumb:hover,
   background: #22e56f; /* Tema rengin */
 }
 
-.login-input-group:focus{
+.input-border:focus{
   border-color:green;
 }
