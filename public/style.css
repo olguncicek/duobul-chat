@@ -313,10 +313,7 @@ ul.messages li.message.mine {
     background: #ff4655;
     border-color: #ff4655;
     color: #fff;
-    background-color: transparent !important;
-    width: 24px !important;
-    height: 24px !important;
-    object-fit: contain; /* Resmi sıkıştırmadan sığdırır */
+    box-shadow: 0 0 15px rgba(255, 70, 85, 0.4);
 }
 
 /* League of Legends (Mavi/Hextech) */
