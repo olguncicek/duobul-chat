@@ -101,7 +101,6 @@ body {
   border: 1px solid #343b48;
   background: #0f141b;
   color: #e5ecff;
-  outline: none;
 }
 
 .login-input-group input::placeholder {
