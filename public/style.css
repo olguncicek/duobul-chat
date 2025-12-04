@@ -103,7 +103,7 @@ body {
   color: white;
 }
 .login-input-group input::focus{
-  color:green;
+  border-color:green;
 }
 
 .login-input-group input::placeholder {
