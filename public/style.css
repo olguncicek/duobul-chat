@@ -306,8 +306,7 @@ ul.messages li.message.mine {
   object-fit: contain;     /* Resmi bozmadan sığdır */
   display: block;
   background-color: transparent !important;
-  box-shadow: none !important; /* Varsa gölgeyi de kaldırır */
-  border: none !important;
+  
 }
 
 .lobby-btn.game-val.active {
