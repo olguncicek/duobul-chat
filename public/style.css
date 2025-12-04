@@ -312,7 +312,7 @@ ul.messages li.message.mine {
   
 }
 /* CS2 (Turuncu) */
-.lobby-btn.game-cs.active {
+.lobby-btn.active {
     background: #de9b35;
     border-color: #de9b35;
     color: #000;
