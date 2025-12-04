@@ -285,16 +285,18 @@ ul.messages li.message.mine {
   background: #1f2933;
   border: 1px solid #343b48;
   color: #9ba4b4;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: 12px 24px;
+  border-radius: 15px;
+  font-size: 16x;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
   display: flex;
   align-items: center;
   justify-content: center; /* İçeriği ortalar */
-  gap: 8px;
+  gap: 12px;
+  font-weight: 600;    /* Yazı biraz daha kalın */
+  height: 50px;
 }
 
 .lobby-btn:hover {
@@ -304,8 +306,8 @@ ul.messages li.message.mine {
 }
 
 .lobby-btn img {
-  width: 24px !important;  /* Genişlik sabit */
-  height: 24px !important; /* Yükseklik sabit */
+  width: 28px !important;  /* Genişlik sabit */
+  height: 28px !important; /* Yükseklik sabit */
   object-fit: contain;     /* Resmi bozmadan sığdır */
   display: block;
   background-color: transparent !important;
