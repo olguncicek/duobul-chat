@@ -332,14 +332,7 @@ ul.messages li.message.mine {
     box-shadow: 0 0 15px rgba(222, 155, 53, 0.4);
 }
 
-/* Aktif Lobi Stili */
-.lobby-btn.active {
-  background: #22e56f;
-  color: #051108;
-  font-weight: 700;
-  border-color: #22e56f;
-  box-shadow: 0 0 10px rgba(34, 229, 111, 0.3);
-}
+
 
 /* --- YENİ OYUN RENKLERİ --- */
 
