@@ -1,6 +1,6 @@
 const socket = io();
 
-// HTML Elementlerini Seçelim
+// HTML Elementleri
 const loginModal = document.getElementById("loginModal");
 const usernameInput = document.getElementById("usernameInput");
 const loginBtn = document.getElementById("loginBtn");
@@ -9,11 +9,11 @@ const chatContainer = document.getElementById("chatContainer");
 const msgInput = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
 const messagesUl = document.querySelector(".messages");
-const lobbyBtns = document.querySelectorAll(".lobby-btn"); // Lobi butonları
+const lobbyBtns = document.querySelectorAll(".lobby-btn");
 
 let myUsername = "";
-let currentRoom = "genel"; // Varsayılan oda
-const userStatusMap = {}; // username -> "online" / "offline"
+let currentRoom = "genel"; 
+const userStatusMap = {}; // Kim online, kim offline haritası
 
 /* ---------- 1. GİRİŞ İŞLEMLERİ ---------- */
 function doLogin() {
@@ -21,10 +21,8 @@ function doLogin() {
   if (!name) return;
   myUsername = name;
   
-  // Sunucuya kullanıcı adını bildir
   socket.emit("setUsername", myUsername);
 
-  // Modalı gizle, sohbeti aç
   loginModal.classList.add("hidden");
   chatContainer.classList.remove("blur");
   msgInput.focus();
@@ -35,22 +33,20 @@ usernameInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") doLogin();
 });
 
-/* ---------- 2. LOBİ / ODA DEĞİŞTİRME ---------- */
+/* ---------- 2. ODA DEĞİŞTİRME ---------- */
 lobbyBtns.forEach((btn) => {
   btn.addEventListener("click", () => {
     const roomName = btn.dataset.room;
-
-    // Eğer zaten o odadaysak hiçbir şey yapma
     if (roomName === currentRoom) return;
 
-    // Görsel olarak aktif butonu değiştir
+    // Aktif butonu değiştir
     document.querySelector(".lobby-btn.active").classList.remove("active");
     btn.classList.add("active");
 
-    // Ekranı temizle (Yeni oda temiz sayfa)
+    // Ekranı temizle
     messagesUl.innerHTML = "";
 
-    // Odayı değiştir
+    // Odaya geç
     currentRoom = roomName;
     socket.emit("joinRoom", currentRoom);
   });
@@ -67,7 +63,6 @@ function sendMessage() {
     hour12: false
   });
 
-  // Mesajı sunucuya gönder
   socket.emit("sendMessage", { text, time });
   msgInput.value = "";
   msgInput.focus();
@@ -78,41 +73,59 @@ msgInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendMessage();
 });
 
-/* ---------- 4. MESAJ ALMA VE GÖSTERME ---------- */
+/* ---------- 4. SUNUCUDAN GELENLER ---------- */
 
-// A) Yeni bir mesaj geldiğinde
+// Yeni Mesaj Geldiğinde
 socket.on("newMessage", (msg) => {
   addMessage(msg.username, msg.text, msg.time);
 });
 
-// B) Geçmiş mesajları yükle dendiğinde (Oda değişince)
+// Eski Mesajlar Yüklendiğinde
 socket.on("loadHistory", (messages) => {
-  messagesUl.innerHTML = ""; // Garanti olsun diye temizle
+  messagesUl.innerHTML = "";
   messages.forEach((msg) => {
     addMessage(msg.username, msg.text, msg.time);
   });
-  // En alta kaydır
-  messagesUl.scrollTop = messagesUl.scrollHeight;
+  scrollToBottom();
 });
 
-// Ekrana Mesaj Ekleyen Yardımcı Fonksiyon
+// Birisi Durum Değiştirdiğinde (Girdi/Çıktı)
+socket.on("userStatus", ({ username, online }) => {
+  userStatusMap[username] = online ? "online" : "offline";
+  updateAllUserStatuses(); // Ekrandaki renkleri güncelle
+});
+
+// [YENİ] Siteye İlk Girince Aktif Kullanıcı Listesini Al
+socket.on("activeUsersList", (usersArray) => {
+  // Gelen listedeki herkesi "online" olarak işaretle
+  usersArray.forEach(u => {
+    userStatusMap[u] = "online";
+  });
+  // Ekrandaki tüm ışıkları buna göre düzelt
+  updateAllUserStatuses();
+});
+
+/* ---------- YARDIMCI FONKSİYONLAR ---------- */
+
 function addMessage(username, text, time) {
   const li = document.createElement("li");
   li.classList.add("message");
   
-  // Eğer mesaj benimse 'mine' sınıfı ekle (sağa yaslar)
   if (username === myUsername) {
     li.classList.add("mine");
   }
+  // Bu satır önemli: Mesajın kime ait olduğunu etikete yazıyoruz
   li.dataset.username = username;
 
   const header = document.createElement("div");
   header.classList.add("message-header");
 
-  // Online/Offline Durum Noktası
+  // Durum Noktası (Dot)
   const dot = document.createElement("span");
   dot.classList.add("status-dot");
-  if (userStatusMap[username] === "offline") {
+  
+  // Eğer listemizde "online" değilse, varsayılan olarak kırmızı (offline) yap
+  if (userStatusMap[username] !== "online") {
     dot.classList.add("offline");
   }
 
@@ -136,21 +149,24 @@ function addMessage(username, text, time) {
   li.appendChild(textP);
 
   messagesUl.appendChild(li);
-  
-  // Otomatik aşağı kaydır
-  messagesUl.scrollTop = messagesUl.scrollHeight;
+  scrollToBottom();
 }
 
-/* ---------- 5. ONLINE / OFFLINE DURUMU ---------- */
-socket.on("userStatus", ({ username, online }) => {
-  userStatusMap[username] = online ? "online" : "offline";
-
-  // Ekrandaki eski mesajlardaki noktaların rengini güncelle
-  const dots = document.querySelectorAll(
-    `li.message[data-username="${username}"] .status-dot`
-  );
-  dots.forEach((dot) => {
-    if (online) dot.classList.remove("offline");
-    else dot.classList.add("offline");
+// Ekrandaki tüm mesajların ışıklarını günceller
+function updateAllUserStatuses() {
+  const allMessages = document.querySelectorAll("li.message");
+  allMessages.forEach(li => {
+    const uName = li.dataset.username;
+    const dot = li.querySelector(".status-dot");
+    
+    if (userStatusMap[uName] === "online") {
+      dot.classList.remove("offline"); // Yeşil
+    } else {
+      dot.classList.add("offline"); // Kırmızı
+    }
   });
-});
+}
+
+function scrollToBottom() {
+  messagesUl.scrollTop = messagesUl.scrollHeight;
+}
