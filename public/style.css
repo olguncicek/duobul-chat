@@ -305,6 +305,9 @@ ul.messages li.message.mine {
   height: 24px !important; /* Yükseklik sabit */
   object-fit: contain;     /* Resmi bozmadan sığdır */
   display: block;
+  background-color: transparent !important;
+  box-shadow: none !important; /* Varsa gölgeyi de kaldırır */
+  border: none !important;
 }
 
 /* Aktif Lobi Stili */
