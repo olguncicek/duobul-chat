@@ -100,7 +100,7 @@ body {
   border-radius: 10px;
   border: 1px solid #343b48;
   background: #0f141b;
-  color: #e5ecff;
+  color: green;
 }
 
 .login-input-group input::placeholder {
