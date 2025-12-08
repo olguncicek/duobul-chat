@@ -3,6 +3,7 @@ const socket = io();
 // HTML Elementleri
 const loginModal = document.getElementById("loginModal");
 const usernameInput = document.getElementById("usernameInput");
+const passwordInput = document.getElementById("passwordInput");
 const loginBtn = document.getElementById("loginBtn");
 const chatContainer = document.getElementById("chatContainer");
 
@@ -17,18 +18,43 @@ const userStatusMap = {}; // Kim online, kim offline haritası
 
 /* ---------- 1. GİRİŞ İŞLEMLERİ ---------- */
 function doLogin() {
-  const name = usernameInput.value.trim();
-  if (!name) return;
-  myUsername = name;
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
   
-  socket.emit("setUsername", myUsername);
-
-  loginModal.classList.add("hidden");
-  chatContainer.classList.remove("blur");
-  msgInput.focus();
+  if (!username || !password) {
+    alert("Lütfen bir kullanıcı adı ve şifre belirleyin!");
+    return;
+  }
+  
+  // Sunucuya giriş isteği gönder (İsim + Şifre)
+  socket.emit("loginAttempt", { username, password });
 }
 
+// Sunucudan gelen "Giriş Başarılı" cevabı
+socket.on("loginSuccess", (approvedUsername) => {
+  myUsername = approvedUsername;
+  
+  loginModal.classList.add("hidden");
+  chatContainer.classList.remove("blur");
+  
+  // Önceki mesajları temizle (tekrar giriş yapılırsa diye)
+  messagesUl.innerHTML = "";
+  
+  msgInput.focus();
+});
+
+// Sunucudan gelen "Hatalı Giriş" cevabı
+socket.on("loginError", (message) => {
+  alert(message);
+  passwordInput.value = ""; // Şifreyi temizle
+});
+
 loginBtn.addEventListener("click", doLogin);
+
+// Enter tuşu desteği
+passwordInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") doLogin();
+});
 usernameInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") doLogin();
 });
@@ -92,16 +118,14 @@ socket.on("loadHistory", (messages) => {
 // Birisi Durum Değiştirdiğinde (Girdi/Çıktı)
 socket.on("userStatus", ({ username, online }) => {
   userStatusMap[username] = online ? "online" : "offline";
-  updateAllUserStatuses(); // Ekrandaki renkleri güncelle
+  updateAllUserStatuses(); 
 });
 
-// [YENİ] Siteye İlk Girince Aktif Kullanıcı Listesini Al
+// Siteye İlk Girince Aktif Kullanıcı Listesini Al
 socket.on("activeUsersList", (usersArray) => {
-  // Gelen listedeki herkesi "online" olarak işaretle
   usersArray.forEach(u => {
     userStatusMap[u] = "online";
   });
-  // Ekrandaki tüm ışıkları buna göre düzelt
   updateAllUserStatuses();
 });
 
@@ -114,17 +138,14 @@ function addMessage(username, text, time) {
   if (username === myUsername) {
     li.classList.add("mine");
   }
-  // Bu satır önemli: Mesajın kime ait olduğunu etikete yazıyoruz
   li.dataset.username = username;
 
   const header = document.createElement("div");
   header.classList.add("message-header");
 
-  // Durum Noktası (Dot)
   const dot = document.createElement("span");
   dot.classList.add("status-dot");
   
-  // Eğer listemizde "online" değilse, varsayılan olarak kırmızı (offline) yap
   if (userStatusMap[username] !== "online") {
     dot.classList.add("offline");
   }
@@ -152,7 +173,6 @@ function addMessage(username, text, time) {
   scrollToBottom();
 }
 
-// Ekrandaki tüm mesajların ışıklarını günceller
 function updateAllUserStatuses() {
   const allMessages = document.querySelectorAll("li.message");
   allMessages.forEach(li => {
@@ -160,9 +180,9 @@ function updateAllUserStatuses() {
     const dot = li.querySelector(".status-dot");
     
     if (userStatusMap[uName] === "online") {
-      dot.classList.remove("offline"); // Yeşil
+      dot.classList.remove("offline"); 
     } else {
-      dot.classList.add("offline"); // Kırmızı
+      dot.classList.add("offline"); 
     }
   });
 }
