@@ -11,6 +11,7 @@
     />
   </head>
   <body>
+    <!-- Giriş ekranı -->
     <div id="loginModal" class="login-modal">
       <div class="login-card">
         <div class="logo-area">
@@ -20,29 +21,23 @@
             <div class="logo-subtitle">OYUNCU ARKADAŞINI BUL</div>
           </div>
         </div>
-        <p class="login-tagline">Kayıtlı hesabınla giriş yap, oyuna katıl.</p>
+        <p class="login-tagline">Anında Bağlan, Hemen Oyna.</p>
 
         <div class="login-input-group">
           <input
             class="input-border"
             type="text"
             id="usernameInput"
-            placeholder="Kullanıcı Adı"
-          />
-          <input
-            class="input-border"
-            type="password"
-            id="passwordInput"
-            placeholder="Şifre"
-            style="margin-top: 10px;"
+            placeholder="Kullanıcı Adı Gir..."
           />
         </div>
-        <button id="loginBtn" class="login-button">Giriş Yap / Kayıt Ol ➤</button>
+        <button id="loginBtn" class="login-button">Giriş Yap ➤</button>
       </div>
     </div>
 
+    <!-- Sohbet kutusu -->
     <div class="chat-container blur" id="chatContainer">
-      <h2>Sohbet Odaları</h2>
+      <h2>Sohbet</h2>
       <div class="lobbies">
         <button class="lobby-btn active" data-room="genel">Genel</button>
         <button class="lobby-btn game-val" data-room="val">
@@ -68,8 +63,6 @@
         <button id="sendBtn">➤</button>
       </div>
     </div>
-
-    <audio id="notificationSound" src="/notification.mp3" preload="auto"></audio>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
