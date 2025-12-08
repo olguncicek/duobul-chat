@@ -1,222 +1,147 @@
-const socket = io();
+/* SIFIRLAMA */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
 
-// HTML Elementleri
-const loginModal = document.getElementById("loginModal");
-const appLayout = document.getElementById("appLayout"); // Blur efekti için
-const usernameInput = document.getElementById("usernameInput");
-const passwordInput = document.getElementById("passwordInput");
-const loginBtn = document.getElementById("loginBtn");
-
-// Genel Sohbet
-const msgInput = document.getElementById("msgInput");
-const sendBtn = document.getElementById("sendBtn");
-const publicMessagesUl = document.getElementById("publicMessages");
-const lobbyBtns = document.querySelectorAll(".lobby-btn");
-
-// Özel Mesaj (DM) Elementleri
-const privateSidebar = document.getElementById("privateSidebar");
-const dmTitle = document.getElementById("dmTitle");
-const dmPlaceholder = document.getElementById("dmPlaceholder");
-const dmContent = document.getElementById("dmContent");
-const privateMessagesUl = document.getElementById("privateMessagesList");
-const dmInput = document.getElementById("dmInput");
-const dmSendBtn = document.getElementById("dmSendBtn");
-const closeDmBtn = document.getElementById("closeDmBtn");
-
-// Ses
-const notificationSound = document.getElementById("notificationSound");
-
-let myUsername = "";
-let currentRoom = "genel"; 
-let currentDmUser = null; // Şu an kiminle özel konuşuyorum?
-const userStatusMap = {}; 
-
-/* ---------- 1. GİRİŞ İŞLEMLERİ ---------- */
-function doLogin() {
-  const username = usernameInput.value.trim();
-  const password = passwordInput.value.trim();
-  
-  if (!username || !password) return alert("Kullanıcı adı ve şifre giriniz!");
-  
-  socket.emit("loginAttempt", { username, password });
+body {
+  background-color: #0f1217; /* Arka plan rengi */
+  color: white;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* Sayfa kaymasını engelle */
 }
 
-socket.on("loginSuccess", (approvedUsername) => {
-  myUsername = approvedUsername;
-  loginModal.classList.add("hidden");
-  appLayout.classList.remove("blur"); // Layout'un bluru kalktı
-  msgInput.focus();
-});
-
-socket.on("loginError", (msg) => { alert(msg); passwordInput.value = ""; });
-
-loginBtn.addEventListener("click", doLogin);
-passwordInput.addEventListener("keypress", (e) => { if(e.key === "Enter") doLogin(); });
-
-/* ---------- 2. GENEL ODA DEĞİŞTİRME ---------- */
-lobbyBtns.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const roomName = btn.dataset.room;
-    if (roomName === currentRoom) return;
-    
-    document.querySelector(".lobby-btn.active").classList.remove("active");
-    btn.classList.add("active");
-    publicMessagesUl.innerHTML = "";
-    
-    currentRoom = roomName;
-    socket.emit("joinRoom", currentRoom);
-  });
-});
-
-/* ---------- 3. GENEL MESAJ GÖNDERME ---------- */
-function sendPublicMessage() {
-  const text = msgInput.value.trim();
-  if (!text || !myUsername) return;
-
-  const time = getNow();
-  socket.emit("sendMessage", { text, time });
-  msgInput.value = "";
-  msgInput.focus();
+/* --- ANA DÜZEN (Layout) --- */
+.app-layout {
+  display: flex;
+  width: 95vw;
+  height: 90vh;
+  gap: 15px;
+  background: #1e2530;
+  border-radius: 15px;
+  padding: 15px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  transition: filter 0.3s;
 }
 
-sendBtn.addEventListener("click", sendPublicMessage);
-msgInput.addEventListener("keypress", (e) => { if(e.key === "Enter") sendPublicMessage(); });
+.blur { filter: blur(8px); pointer-events: none; }
+.hidden { display: none !important; }
 
-/* ---------- 4. ÖZEL MESAJ (DM) SİSTEMİ ---------- */
-
-// A) Bir isme tıklandığında DM penceresini hazırla
-function openPrivateChat(targetUser) {
-  if (targetUser === myUsername) return; // Kendine mesaj atama
-
-  currentDmUser = targetUser;
-  dmTitle.innerText = `DM: ${targetUser}`;
-  
-  // Arayüzü aç
-  dmPlaceholder.classList.add("hidden");
-  dmContent.classList.remove("hidden");
-  
-  // Önceki mesajları temizle ve geçmişi iste
-  privateMessagesUl.innerHTML = "";
-  socket.emit("getPrivateHistory", targetUser);
-  
-  dmInput.focus();
+/* --- SOL TARAFTAKİ SOHBET --- */
+.chat-section {
+  flex: 2; /* Genişlik oranı 2 birim */
+  display: flex;
+  flex-direction: column;
+  background: #151a21;
+  border-radius: 10px;
+  padding: 10px;
 }
 
-// B) DM Gönderme
-function sendPrivateMessage() {
-  const text = dmInput.value.trim();
-  if (!text || !currentDmUser) return;
-  
-  const time = getNow();
-  
-  // Sunucuya gönder
-  socket.emit("privateMessage", {
-    to: currentDmUser,
-    text: text,
-    time: time
-  });
-  
-  // Hemen kendi ekranıma ekle
-  addMessage(myUsername, text, time, privateMessagesUl, true);
-  dmInput.value = "";
-  dmInput.focus();
+/* --- SAĞ TARAFTAKİ ÖZEL MESAJ --- */
+.private-section {
+  flex: 1; /* Genişlik oranı 1 birim */
+  display: flex;
+  flex-direction: column;
+  background: #0b0e11;
+  border: 1px solid #22e56f; /* Yeşil Çerçeve */
+  border-radius: 10px;
+  padding: 10px;
 }
 
-dmSendBtn.addEventListener("click", sendPrivateMessage);
-dmInput.addEventListener("keypress", (e) => { if(e.key === "Enter") sendPrivateMessage(); });
+/* --- ODALAR VE BAŞLIKLAR --- */
+.rooms-header {
+  display: flex;
+  gap: 10px;
+  padding-bottom: 10px;
+  overflow-x: auto;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #333;
+}
+.room-btn {
+  background: #2a3442;
+  border: none;
+  color: #aaa;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.room-btn.active { background: #22e56f; color: #000; font-weight: bold; }
 
-closeDmBtn.addEventListener("click", () => {
-  currentDmUser = null;
-  dmTitle.innerText = "Özel Mesaj";
-  dmPlaceholder.classList.remove("hidden");
-  dmContent.classList.add("hidden");
-});
+/* VALORANT ÖZEL */
+.room-btn.val:hover { color: #ff4655; }
+.room-btn.val.active { background: #ff4655; color: #fff; }
 
-/* ---------- 5. SUNUCUDAN GELENLER ---------- */
+/* --- MESAJ ALANI --- */
+.chat-window { flex: 1; overflow-y: auto; margin-bottom: 10px; }
+.message-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 
-// Genel Mesaj
-socket.on("newMessage", (msg) => {
-  addMessage(msg.username, msg.text, msg.time, publicMessagesUl, false);
-  if (msg.username !== myUsername) playSound();
-});
-
-// Genel Geçmiş
-socket.on("loadHistory", (messages) => {
-  publicMessagesUl.innerHTML = "";
-  messages.forEach((msg) => addMessage(msg.username, msg.text, msg.time, publicMessagesUl, false));
-});
-
-// DM Geldiğinde
-socket.on("receivePrivateMessage", (msg) => {
-  // Eğer şu an o kişiyle konuşuyorsam ekrana bas
-  if (currentDmUser === msg.from) {
-    addMessage(msg.from, msg.text, msg.time, privateMessagesUl, true);
-  } else {
-    // Başkasıyla konuşuyorsam veya panel kapalıysa bildirim ver (İleride buraya kırmızı nokta eklenebilir)
-    alert(`${msg.from} sana özel mesaj attı!`);
-  }
-  playSound();
-});
-
-// DM Geçmişi Yüklendiğinde
-socket.on("loadPrivateHistory", (messages) => {
-  privateMessagesUl.innerHTML = "";
-  messages.forEach((msg) => {
-    // Kimin gönderdiğini kontrol et
-    addMessage(msg.sender, msg.text, msg.time, privateMessagesUl, true);
-  });
-});
-
-socket.on("userStatus", ({ username, online }) => {
-  userStatusMap[username] = online ? "online" : "offline";
-  // (Burada tüm listeyi güncelleme fonksiyonu çağrılabilir)
-});
-
-/* ---------- YARDIMCI FONKSİYONLAR ---------- */
-
-function getNow() {
-  return new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", hour12: false });
+.message-list li {
+  background: rgba(255,255,255,0.05);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  word-wrap: break-word;
+}
+.message-list li.mine {
+  background: rgba(34, 229, 111, 0.1);
+  border-left: 3px solid #22e56f;
+  align-self: flex-end; /* Kendi mesajım sağa yaslı olsun istersen aç */
 }
 
-function playSound() {
-  notificationSound.play().catch(e => console.log(e));
+/* İsimler ve Tıklama */
+.sender { font-weight: bold; color: #22e56f; cursor: pointer; margin-right: 5px; }
+.sender:hover { text-decoration: underline; }
+.date { font-size: 0.7rem; color: #666; float: right; }
+
+/* --- INPUT ALANI --- */
+.input-area { display: flex; gap: 10px; margin-top: auto; }
+.input-area input {
+  flex: 1;
+  padding: 10px;
+  background: #2a3442;
+  border: none;
+  color: white;
+  border-radius: 5px;
+}
+.input-area button {
+  padding: 0 20px;
+  background: #22e56f;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
 }
 
-// Mesajı Ekrana Basan Fonksiyon
-// targetUl: Hangi listeye eklenecek? (Genel mi Özel mi?)
-// isPrivate: Özel mesaj mı? (İsim tıklanabilirliği için önemli)
-function addMessage(username, text, time, targetUl, isPrivate) {
-  const li = document.createElement("li");
-  li.classList.add("message");
-  
-  if (username === myUsername) li.classList.add("mine");
-  
-  const header = document.createElement("div");
-  header.classList.add("message-header");
+/* --- DM ÖZEL STİLLER --- */
+.private-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+  color: #22e56f;
+}
+.dm-placeholder { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: #555; }
+.dm-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-  const senderSpan = document.createElement("span");
-  senderSpan.classList.add("sender");
-  senderSpan.textContent = username;
-  
-  // Sadece GENEL SOHBETTE ve BAŞKASININ ismine tıklayınca DM aç
-  if (!isPrivate && username !== myUsername) {
-    senderSpan.onclick = () => openPrivateChat(username);
-    senderSpan.title = "Özel mesaj at";
-  }
-
-  const dateSpan = document.createElement("span");
-  dateSpan.classList.add("date");
-  dateSpan.textContent = time;
-
-  header.appendChild(senderSpan);
-  header.appendChild(dateSpan);
-
-  const p = document.createElement("p");
-  p.textContent = text;
-
-  li.appendChild(header);
-  li.appendChild(p);
-  
-  targetUl.appendChild(li);
-  targetUl.scrollTop = targetUl.scrollHeight;
+/* --- LOGIN MODAL --- */
+.login-modal {
+  position: fixed; inset: 0;
+  background: #000;
+  display: flex; justify-content: center; align-items: center;
+  z-index: 999;
+}
+.login-card {
+  background: #151a21; padding: 40px;
+  border-radius: 15px; border: 1px solid #333;
+  text-align: center; width: 350px;
+}
+.login-inputs input {
+  width: 100%; padding: 12px; margin: 10px 0;
+  background: #0a0c10; border: 1px solid #333; color: white;
+}
+#loginBtn {
+  width: 100%; padding: 12px; background: #22e56f;
+  border: none; font-weight: bold; cursor: pointer; margin-top: 10px;
 }
