@@ -1,60 +1,70 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DuoBul Sohbet</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
-
-  <!-- Giriş ekranı -->
-  <div id="loginModal" class="login-modal">
-    <div class="login-card">
-      <div class="logo-area">
-        <div class="logo-circle"></div>
-        <div class="logo-texts">
-          <div class="logo-title">DuoBul</div>
-          <div class="logo-subtitle">OYUNCU ARKADAŞINI BUL</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DuoBul Sohbet</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- Giriş ekranı -->
+    <div id="loginModal" class="login-modal">
+      <div class="login-card">
+        <div class="logo-area">
+          <div class="logo-circle"></div>
+          <div class="logo-texts">
+            <div class="logo-title">DuoBul</div>
+            <div class="logo-subtitle">OYUNCU ARKADAŞINI BUL</div>
+          </div>
         </div>
-      </div>
-      <p class="login-tagline">Anında Bağlan, Hemen Oyna.</p>
+        <p class="login-tagline">Anında Bağlan, Hemen Oyna.</p>
 
-      <div class="login-input-group">
-        <input class="input-border"
-          type="text"
-          id="usernameInput"
-          placeholder="Kullanıcı Adı Gir..."
-        />
+        <div class="login-input-group">
+          <input
+            class="input-border"
+            type="text"
+            id="usernameInput"
+            placeholder="Kullanıcı Adı Gir..."
+          />
+        </div>
+        <button id="loginBtn" class="login-button">Giriş Yap ➤</button>
       </div>
-      <button id="loginBtn" class="login-button">
-        Giriş Yap ➤
-      </button>
-    </div>
-  </div>
-
-  <!-- Sohbet kutusu -->
-  <div class="chat-container blur" id="chatContainer">
-    <h2>Sohbet</h2>
-    <div class="lobbies">
-        <button class="lobby-btn active" data-room="genel"> Genel </button>
-        <button class="lobby-btn game-val" data-room="val"><img src="/icon/vvv.ico" class="val">Valorant</button>
-        <button class="lobby-btn game-lol" data-room="lol">LoL</button>
-        <button class="lobby-btn game-cs" data-room="cs">CS 2 </button>
-        <button class="lobby-btn game-fc" data-room="fc">FC 26</button>
-        <button class="lobby-btn game-arc" data-room="arc">ARC Raiders </button>
     </div>
 
-    <ul class="messages"></ul>
-    <div class="input">
+    <!-- Sohbet kutusu -->
+    <div class="chat-container blur" id="chatContainer">
+      <h2>Sohbet</h2>
+      <div class="lobbies">
+        <button class="lobby-btn active" data-room="genel">Genel</button>
+        <button class="lobby-btn game-val" data-room="val">
+          <img src="/icon/valo.png" class="val" />Valorant
+        </button>
+        <button class="lobby-btn game-lol" data-room="lol">
+          <img src="/icon/lol.png" class="val" />LoL
+        </button>
+        <button class="lobby-btn game-cs" data-room="cs">
+          <img src="/icon/cs22.png" class="val" />CS 2
+        </button>
+        <button class="lobby-btn game-fc" data-room="fc">
+          <img src="/icon/fc26.png" class="val" />FC 26
+        </button>
+        <button class="lobby-btn game-arc" data-room="arc">
+          <img src="/icon/arc.png" class="val" />ARC Raiders
+        </button>
+      </div>
+
+      <ul class="messages"></ul>
+      <div class="input">
         <input type="text" id="msgInput" placeholder="Mesaj yaz..." />
         <button id="sendBtn">➤</button>
+      </div>
     </div>
-    
-  </div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js"></script>
-</body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+  </body>
 </html>
