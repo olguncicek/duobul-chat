@@ -1,133 +1,136 @@
 const express = require("express");
 const http = require("http");
+const fs = require("fs");
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 
-const io = new Server(server, {
-  cors: {
-    origin: "*"
-  }
-});
+const io = new Server(server, { cors: { origin: "*" } });
 
-// Statik dosyaları sun
 app.use(express.static(__dirname + "/public"));
+app.get("/", (req, res) => res.sendFile(__dirname + "/public/duo.html"));
 
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/duo.html");
-});
+// DOSYALAR
+const USERS_FILE = "users.json";
+const MESSAGES_FILE = "messages.json";
+const PRIVATE_FILE = "privates.json";
 
-// --- VERİ HAVUZU ---
-const activeUsers = new Map(); // Anlık Bağlı Kullanıcılar (Username -> Socket Sayısı)
-const roomMessages = {}; // Oda Adı -> Mesajlar Dizisi []
+let userDatabase = {};
+let roomMessages = {};
+let privateMessages = {}; // Format: { "ahmet-mehmet": [] }
+const activeUsers = new Map();
 
-// --- KULLANICI VERİTABANI (RAM'de tutulur) ---
-// Format: { "kullaniciAdi": "sifre123" }
-const userDatabase = {
-    "admin": "1234" // Örnek bir kayıt
-};
+// --- VERİ YÜKLEME ---
+function loadData() {
+  if (fs.existsSync(USERS_FILE)) userDatabase = JSON.parse(fs.readFileSync(USERS_FILE));
+  else fs.writeFileSync(USERS_FILE, JSON.stringify({}));
+
+  if (fs.existsSync(MESSAGES_FILE)) roomMessages = JSON.parse(fs.readFileSync(MESSAGES_FILE));
+  else fs.writeFileSync(MESSAGES_FILE, JSON.stringify({}));
+
+  if (fs.existsSync(PRIVATE_FILE)) privateMessages = JSON.parse(fs.readFileSync(PRIVATE_FILE));
+  else fs.writeFileSync(PRIVATE_FILE, JSON.stringify({}));
+}
+loadData();
+
+// --- KAYDETME ---
+function saveUsers() { fs.writeFile(USERS_FILE, JSON.stringify(userDatabase, null, 2), () => {}); }
+function saveMessages() { fs.writeFile(MESSAGES_FILE, JSON.stringify(roomMessages, null, 2), () => {}); }
+function savePrivates() { fs.writeFile(PRIVATE_FILE, JSON.stringify(privateMessages, null, 2), () => {}); }
 
 io.on("connection", (socket) => {
-  console.log("Bir kullanıcı bağlandı");
-  
   let username = null;
   let currentRoom = "genel"; 
   socket.join("genel");
 
-  // GİRİŞ / KAYIT MANTIĞI
+  // 1. GİRİŞ
   socket.on("loginAttempt", ({ username: tryUser, password }) => {
     if (!tryUser || !password) return;
-
-    // 1. Kullanıcı veritabanında var mı?
-    if (userDatabase.hasOwnProperty(tryUser)) {
-      // VARSA: Şifreyi kontrol et
-      if (userDatabase[tryUser] === password) {
-        // Şifre doğru -> Giriş Başarılı
-        // (Ekstra kontrol: Zaten online mı? İstersen engelleyebilirsin ama şimdilik izin veriyoruz)
-        username = tryUser;
-        socket.emit("loginSuccess", username);
-        joinProcess(username); // Oyuna dahil etme işlemleri
-      } else {
-        // Şifre yanlış -> Hata ver
-        socket.emit("loginError", "Bu kullanıcı adı zaten alınmış ve şifre yanlış!");
-      }
+    
+    let success = false;
+    if (userDatabase[tryUser]) {
+      if (userDatabase[tryUser] === password) success = true;
     } else {
-      // YOKSA: Yeni kayıt oluştur
       userDatabase[tryUser] = password;
+      saveUsers();
+      success = true;
+    }
+
+    if (success) {
       username = tryUser;
-      
       socket.emit("loginSuccess", username);
-      joinProcess(username); // Oyuna dahil etme işlemleri
       
-      // Sunucu konsoluna bilgi düş
-      console.log(`YENİ KAYIT: ${username} aramıza katıldı.`);
+      // ÖNEMLİ: Kişiye özel mesaj atabilmek için kendi isminde bir odaya sokuyoruz
+      socket.join(username); 
+
+      activeUsers.set(username, true);
+      io.emit("userStatus", { username, online: true });
+
+      if (roomMessages[currentRoom]) socket.emit("loadHistory", roomMessages[currentRoom]);
+    } else {
+      socket.emit("loginError", "Hatalı şifre!");
     }
   });
 
-  // Giriş başarılı olduktan sonra yapılacak standart işler
-  function joinProcess(uName) {
-    // Kullanıcıyı aktif listesine ekle
-    const count = activeUsers.get(uName) || 0;
-    activeUsers.set(uName, count + 1);
-
-    // Herkese "Bu kişi ONLINE oldu" de
-    io.emit("userStatus", { username: uName, online: true });
-
-    // Yeni giren kişiye aktif kullanıcı listesini gönder
-    const onlineUsersList = Array.from(activeUsers.keys());
-    socket.emit("activeUsersList", onlineUsersList);
-
-    // Geçmiş mesajları yükle
-    if (roomMessages[currentRoom]) {
-      socket.emit("loadHistory", roomMessages[currentRoom]);
-    }
-  }
-
-  // 2. ODA DEĞİŞTİRME
+  // 2. ODA DEĞİŞTİRME (GENEL)
   socket.on("joinRoom", (roomName) => {
     socket.leave(currentRoom);
     socket.join(roomName);
     currentRoom = roomName;
 
-    if (roomMessages[roomName]) {
-      socket.emit("loadHistory", roomMessages[roomName]);
-    }
+    if (roomMessages[roomName]) socket.emit("loadHistory", roomMessages[roomName]);
   });
 
-  // 3. MESAJ GÖNDERME
+  // 3. GENEL MESAJ
   socket.on("sendMessage", (data) => {
     if (!username) return;
-    const { text, time } = data;
+    const msg = { username, text: data.text, time: data.time };
 
-    const msg = { username, text, time };
-
-    if (!roomMessages[currentRoom]) {
-      roomMessages[currentRoom] = [];
-    }
+    if (!roomMessages[currentRoom]) roomMessages[currentRoom] = [];
     roomMessages[currentRoom].push(msg);
-
-    if (roomMessages[currentRoom].length > 50) {
-      roomMessages[currentRoom].shift();
-    }
-
+    if (roomMessages[currentRoom].length > 50) roomMessages[currentRoom].shift();
+    
+    saveMessages();
     io.to(currentRoom).emit("newMessage", msg);
   });
 
-  // 4. ÇIKIŞ YAPMA
-  socket.on("disconnect", () => {
+  // 4. ÖZEL MESAJ (DM) SİSTEMİ
+  
+  // A) Geçmişi İste
+  socket.on("getPrivateHistory", (targetUser) => {
     if (!username) return;
+    // Benzersiz anahtar: İsimleri alfabetik sıraya dizip birleştiriyoruz
+    const key = [username, targetUser].sort().join("-");
+    const history = privateMessages[key] || [];
+    socket.emit("loadPrivateHistory", history);
+  });
 
-    const count = activeUsers.get(username) || 0;
-    if (count <= 1) {
+  // B) Özel Mesaj Gönder
+  socket.on("sendPrivateMessage", ({ to, text, time }) => {
+    if (!username) return;
+    const key = [username, to].sort().join("-");
+    const msgObj = { sender: username, text, time };
+
+    if (!privateMessages[key]) privateMessages[key] = [];
+    privateMessages[key].push(msgObj);
+    if (privateMessages[key].length > 50) privateMessages[key].shift(); // Son 50 mesaj
+    savePrivates();
+
+    // 1. Alıcıya Gönder
+    io.to(to).emit("receivePrivateMessage", { from: username, text, time });
+    
+    // 2. Gönderene (Kendime) de gönder ki ekranımda çıksın
+    socket.emit("receivePrivateMessage", { from: username, text, time, isMine: true });
+  });
+
+  // 5. ÇIKIŞ
+  socket.on("disconnect", () => {
+    if (username) {
       activeUsers.delete(username);
       io.emit("userStatus", { username, online: false });
-    } else {
-      activeUsers.set(username, count - 1);
     }
   });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Sunucu çalışıyor: http://localhost:${PORT}`);
-});
+server.listen(PORT, () => console.log(`Sunucu çalışıyor: http://localhost:${PORT}`));
