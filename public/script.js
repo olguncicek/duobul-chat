@@ -16,23 +16,44 @@ let currentRoom = "genel";
 const userStatusMap = {}; // Kim online, kim offline haritası
 
 /* ---------- 1. GİRİŞ İŞLEMLERİ ---------- */
-function doLogin() {
-  const name = usernameInput.value.trim();
-  if (!name) return;
-  myUsername = name;
-  
-  socket.emit("setUsername", myUsername);
+const passwordInput = document.getElementById("passwordInput"); // Yeni element
 
+function doLogin() {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  
+  if (!username || !password) {
+    alert("Lütfen kullanıcı adı ve şifreyi giriniz!");
+    return;
+  }
+  
+  // Sunucuya giriş isteği gönder (İsim + Şifre)
+  socket.emit("loginAttempt", { username, password });
+}
+
+// Sunucudan gelen "Giriş Başarılı" cevabı
+socket.on("loginSuccess", (approvedUsername) => {
+  myUsername = approvedUsername;
+  
   loginModal.classList.add("hidden");
   chatContainer.classList.remove("blur");
   msgInput.focus();
-}
+});
+
+// Sunucudan gelen "Hatalı Giriş" cevabı
+socket.on("loginError", (message) => {
+  alert(message); // Örn: "Şifre yanlış!"
+  passwordInput.value = ""; // Şifreyi temizle
+});
 
 loginBtn.addEventListener("click", doLogin);
+// Şifre kutusunda Enter'a basınca da giriş yap
+passwordInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") doLogin();
+});
 usernameInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") doLogin();
 });
-
 /* ---------- 2. ODA DEĞİŞTİRME ---------- */
 lobbyBtns.forEach((btn) => {
   btn.addEventListener("click", () => {
