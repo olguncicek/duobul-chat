@@ -1,6 +1,6 @@
 const express = require("express");
 const http = require("http");
-const fs = require("fs"); // Dosya işlemleri için gerekli modül
+const fs = require("fs"); // Dosya okuma/yazma modülü
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
@@ -19,14 +19,16 @@ app.get("/", (req, res) => {
 });
 
 // --- VERİ HAVUZU ---
-const activeUsers = new Map(); // Anlık Bağlı Kullanıcılar (Online Durumu)
-const roomMessages = {}; // Oda Mesajları (RAM'de duruyor, istersen bunu da kaydederiz)
+const activeUsers = new Map(); // Anlık Online Kullanıcılar
 
 // --- DOSYA SİSTEMİ AYARLARI ---
 const USERS_FILE = "users.json";
-let userDatabase = {};
+const MESSAGES_FILE = "messages.json";
 
-// 1. Sunucu açılırken kayıtlı kullanıcıları yükle
+let userDatabase = {};
+let roomMessages = {}; // Mesajlar artık burada ve dosyadan yüklenecek
+
+// 1. Kullanıcıları Yükle
 function loadUsers() {
   if (fs.existsSync(USERS_FILE)) {
     try {
@@ -34,28 +36,50 @@ function loadUsers() {
       userDatabase = JSON.parse(data);
       console.log("✅ Kullanıcı veritabanı yüklendi.");
     } catch (err) {
-      console.error("Veritabanı okunurken hata oluştu, boş başlatılıyor.", err);
+      console.error("Kullanıcı dosyası hatası:", err);
       userDatabase = {};
     }
   } else {
-    // Dosya yoksa oluştur
     fs.writeFileSync(USERS_FILE, JSON.stringify({}, null, 2));
-    console.log("📁 Yeni kullanıcı dosyası oluşturuldu.");
   }
 }
 
-// 2. Yeni kullanıcıyı dosyaya kaydet
+// 2. Mesajları Yükle (YENİ)
+function loadMessages() {
+  if (fs.existsSync(MESSAGES_FILE)) {
+    try {
+      const data = fs.readFileSync(MESSAGES_FILE, "utf-8");
+      roomMessages = JSON.parse(data);
+      console.log("✅ Mesaj geçmişi yüklendi.");
+    } catch (err) {
+      console.error("Mesaj dosyası hatası:", err);
+      roomMessages = {};
+    }
+  } else {
+    // Dosya yoksa boş başlat
+    roomMessages = {};
+    fs.writeFileSync(MESSAGES_FILE, JSON.stringify({}, null, 2));
+  }
+}
+
+// 3. Kullanıcı Kaydet
 function saveUserToDisk(username, password) {
   userDatabase[username] = password;
-  // Dosyayı güncelle
   fs.writeFile(USERS_FILE, JSON.stringify(userDatabase, null, 2), (err) => {
-    if (err) console.error("Kayıt sırasında hata:", err);
-    else console.log(`💾 ${username} dosyaya kaydedildi.`);
+    if (err) console.error("Kayıt hatası:", err);
   });
 }
 
-// Başlangıçta yüklemeyi yap
+// 4. Mesajları Kaydet (YENİ)
+function saveMessagesToDisk() {
+  fs.writeFile(MESSAGES_FILE, JSON.stringify(roomMessages, null, 2), (err) => {
+    if (err) console.error("Mesaj kaydetme hatası:", err);
+  });
+}
+
+// Başlangıçta verileri yükle
 loadUsers();
+loadMessages();
 
 io.on("connection", (socket) => {
   console.log("Bir kullanıcı bağlandı");
@@ -64,35 +88,28 @@ io.on("connection", (socket) => {
   let currentRoom = "genel"; 
   socket.join("genel");
 
-  // --- GİRİŞ / OTOMATİK KAYIT MANTIĞI ---
+  // GİRİŞ İŞLEMİ
   socket.on("loginAttempt", ({ username: tryUser, password }) => {
     if (!tryUser || !password) return;
 
-    // A) Kullanıcı zaten kayıtlı mı?
     if (userDatabase.hasOwnProperty(tryUser)) {
-      // Şifre kontrolü
       if (userDatabase[tryUser] === password) {
-        // BAŞARILI GİRİŞ
         username = tryUser;
         socket.emit("loginSuccess", username);
         joinProcess(username);
       } else {
-        // HATALI ŞİFRE
-        socket.emit("loginError", "Bu kullanıcı adı kayıtlı ama şifre yanlış!");
+        socket.emit("loginError", "Şifre hatalı!");
       }
     } else {
-      // B) Kayıtlı değil -> OTOMATİK KAYIT OL
-      saveUserToDisk(tryUser, password); // Dosyaya yaz
-      
+      // Yeni Kayıt
+      saveUserToDisk(tryUser, password);
       username = tryUser;
       socket.emit("loginSuccess", username);
       joinProcess(username);
-      
-      console.log(`YENİ KAYIT: ${username} oluşturuldu.`);
+      console.log(`YENİ KAYIT: ${username}`);
     }
   });
 
-  // Giriş başarılı olunca yapılacak işlemler
   function joinProcess(uName) {
     const count = activeUsers.get(uName) || 0;
     activeUsers.set(uName, count + 1);
@@ -102,6 +119,7 @@ io.on("connection", (socket) => {
     const onlineUsersList = Array.from(activeUsers.keys());
     socket.emit("activeUsersList", onlineUsersList);
 
+    // Odaya girince geçmişi yükle
     if (roomMessages[currentRoom]) {
       socket.emit("loadHistory", roomMessages[currentRoom]);
     }
@@ -113,27 +131,36 @@ io.on("connection", (socket) => {
     socket.join(roomName);
     currentRoom = roomName;
 
+    // Odanın geçmiş mesajlarını gönder
     if (roomMessages[roomName]) {
       socket.emit("loadHistory", roomMessages[roomName]);
     }
   });
 
-  // MESAJ GÖNDERME
+  // MESAJ GÖNDERME (GÜNCELLENDİ)
   socket.on("sendMessage", (data) => {
     if (!username) return;
     const { text, time } = data;
 
     const msg = { username, text, time };
 
+    // Eğer oda henüz oluşmamışsa oluştur
     if (!roomMessages[currentRoom]) {
       roomMessages[currentRoom] = [];
     }
+
+    // Mesajı ekle
     roomMessages[currentRoom].push(msg);
 
+    // Son 50 mesaj sınırını koru (Dosya boyutu şişmesin diye)
     if (roomMessages[currentRoom].length > 50) {
       roomMessages[currentRoom].shift();
     }
 
+    // Dosyaya kaydet
+    saveMessagesToDisk();
+
+    // Diğerlerine gönder
     io.to(currentRoom).emit("newMessage", msg);
   });
 
