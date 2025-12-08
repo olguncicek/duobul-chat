@@ -20,55 +20,59 @@
             <div class="logo-subtitle">OYUNCU ARKADAŞINI BUL</div>
           </div>
         </div>
-        <p class="login-tagline">İsmini ve şifreni gir. İlk girişin ise otomatik kayıt olursun.</p>
+        <p class="login-tagline">Kayıtlı hesabınla giriş yap, oyuna katıl.</p>
 
         <div class="login-input-group">
-          <input
-            class="input-border"
-            type="text"
-            id="usernameInput"
-            placeholder="Kullanıcı Adı"
-          />
-          <input
-            class="input-border"
-            type="password"
-            id="passwordInput"
-            placeholder="Şifre"
-            style="margin-top: 10px;"
-          />
+          <input class="input-border" type="text" id="usernameInput" placeholder="Kullanıcı Adı" />
+          <input class="input-border" type="password" id="passwordInput" placeholder="Şifre" style="margin-top: 10px;" />
         </div>
         <button id="loginBtn" class="login-button">Giriş Yap / Kayıt Ol ➤</button>
       </div>
     </div>
 
-    <div class="chat-container blur" id="chatContainer">
-      <h2>Sohbet</h2>
-      <div class="lobbies">
-        <button class="lobby-btn active" data-room="genel">Genel</button>
-        <button class="lobby-btn game-val" data-room="val">
-          <img src="/icon/valo.png" class="val" />Valorant
-        </button>
-        <button class="lobby-btn game-lol" data-room="lol">
-          <img src="/icon/lol.png" class="val" />LoL
-        </button>
-        <button class="lobby-btn game-cs" data-room="cs">
-          <img src="/icon/cs22.png" class="val" />CS 2
-        </button>
-        <button class="lobby-btn game-fc" data-room="fc">
-          <img src="/icon/fc26.png" class="val" />FC 26
-        </button>
-        <button class="lobby-btn game-arc" data-room="arc">
-          <img src="/icon/arc.png" class="val" />ARC Raiders
-        </button>
+    <div class="app-layout blur" id="appLayout">
+      
+      <div class="chat-container">
+        <h2>Sohbet Odaları</h2>
+        <div class="lobbies">
+          <button class="lobby-btn active" data-room="genel">Genel</button>
+          <button class="lobby-btn game-val" data-room="val"><img src="/icon/valo.png" class="val" />Valorant</button>
+          <button class="lobby-btn game-lol" data-room="lol"><img src="/icon/lol.png" class="val" />LoL</button>
+          <button class="lobby-btn game-cs" data-room="cs"><img src="/icon/cs22.png" class="val" />CS 2</button>
+          <button class="lobby-btn game-fc" data-room="fc"><img src="/icon/fc26.png" class="val" />FC 26</button>
+          <button class="lobby-btn game-arc" data-room="arc"><img src="/icon/arc.png" class="val" />ARC Raiders</button>
+        </div>
+
+        <ul class="messages" id="publicMessages"></ul>
+        <div class="input">
+          <input type="text" id="msgInput" placeholder="Buraya yaz..." />
+          <button id="sendBtn">➤</button>
+        </div>
       </div>
 
-      <ul class="messages"></ul>
-      <div class="input">
-        <input type="text" id="msgInput" placeholder="Mesaj yaz..." />
-        <button id="sendBtn">➤</button>
+      <div class="private-sidebar" id="privateSidebar">
+        <div class="private-header">
+          <h3 id="dmTitle">Özel Mesaj</h3>
+          <button id="closeDmBtn" class="close-dm">X</button>
+        </div>
+        
+        <div id="dmPlaceholder" class="dm-placeholder">
+          <p>Mesajlaşmak için soldaki sohbetten bir isme tıkla.</p>
+        </div>
+
+        <div id="dmContent" class="dm-content hidden">
+          <ul class="messages" id="privateMessagesList"></ul>
+          <div class="input">
+            <input type="text" id="dmInput" placeholder="Özel mesaj..." />
+            <button id="dmSendBtn">➤</button>
+          </div>
+        </div>
       </div>
+
     </div>
+
     <audio id="notificationSound" src="/notification.mp3" preload="auto"></audio>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
   </body>
