@@ -6,6 +6,7 @@ const usernameInput = document.getElementById("usernameInput");
 const passwordInput = document.getElementById("passwordInput");
 const loginBtn = document.getElementById("loginBtn");
 const chatContainer = document.getElementById("chatContainer");
+const notificationSound = document.getElementById("notificationSound");
 
 const msgInput = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
@@ -104,6 +105,13 @@ msgInput.addEventListener("keypress", (e) => {
 // Yeni Mesaj Geldiğinde
 socket.on("newMessage", (msg) => {
   addMessage(msg.username, msg.text, msg.time);
+  // EĞER MESAJI BEN YAZMADIYSAM SES ÇAL
+  if (msg.username !== myUsername) {
+    // Tarayıcı hatasını önlemek için catch kullanıyoruz
+    notificationSound.play().catch((error) => {
+      console.log("Ses çalma hatası (Kullanıcı etkileşimi gerekebilir):", error);
+});
+  }
 });
 
 // Eski Mesajlar Yüklendiğinde
