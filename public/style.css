@@ -3,7 +3,6 @@
   padding: 0;
   box-sizing: border-box;
   font-family: Arial, sans-serif;
-
 }
 
 /* Arka plan */
@@ -17,7 +16,7 @@ body {
   background-size: cover;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
 }
 
 /* Bulanık efekt */
@@ -49,7 +48,6 @@ body {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
   padding: 32px 32px 28px;
   border: 1px solid #1f2933;
-
 }
 
 .logo-area {
@@ -98,16 +96,21 @@ body {
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid #343b48;
+  border: 3px solid #343b48;
   background: #0f141b;
   color: white;
 }
-.login-input-group input::focus{
-  border:1px solid green;
+.login-input-group input:focus {
+  border: 3px solid #22e56f;
+  outline: none;
 }
 
 .login-input-group input::placeholder {
   color: #6c7484;
+}
+
+.login-input-group input:focus::placeholder {
+  color: transparent;
 }
 
 .login-button {
@@ -122,8 +125,7 @@ body {
   font-size: 15px;
   cursor: pointer;
   box-shadow: 0 12px 35px rgba(34, 229, 111, 0.35);
-  transition: transform 0.08s ease, box-shadow 0.08s ease,
-    background 0.1s ease;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.1s ease;
 }
 
 .login-button:hover {
@@ -134,20 +136,19 @@ body {
 
 /* Sohbet kutusu */
 .chat-container {
-    width: 80%;          /* 75% → 90% yap */
-    max-width: 1200px;   /* 1100px → 1400px yap */
-    height: 85vh;
-    margin: 40px auto;
-    background: rgba(26, 33, 44, 0.95);
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(6px);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  width: 80%; /* 75% → 90% yap */
+  max-width: 1200px; /* 1100px → 1400px yap */
+  height: 85vh;
+  margin: 40px auto;
+  background: rgba(26, 33, 44, 0.95);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-
 
 .chat-container h2 {
   padding: 14px 16px;
@@ -285,7 +286,7 @@ ul.messages li.message.mine {
 
 .lobby-btn {
   background: #1f2933;
-  border: 1px solid #343b48;
+  border: 3px solid #343b48;
   color: #9ba4b4;
   padding: 12px 24px;
   border-radius: 15px;
@@ -297,7 +298,7 @@ ul.messages li.message.mine {
   align-items: center;
   justify-content: center; /* İçeriği ortalar */
   gap: 12px;
-  font-weight: 600;    /* Yazı biraz daha kalın */
+  font-weight: 600; /* Yazı biraz daha kalın */
   height: 50px;
 }
 
@@ -308,92 +309,84 @@ ul.messages li.message.mine {
 }
 
 .lobby-btn img {
-  width: 28px !important;  /* Genişlik sabit */
-  height: 28px !important; /* Yükseklik sabit */
-  object-fit: contain;     /* Resmi bozmadan sığdır */
+  width: 28px !important;
+  height: 28px !important;
+  object-fit: contain; /* Resmi bozmadan sığdır */
   display: block;
-  background-color: transparent !important;
+  background: transparent !important;
+  border: none;
 }
-
 
 /* GENEL  */
 .lobby-btn.active {
-    background: #00a8ff; /* Canlı bir gökyüzü mavisi */
-    border-color: #00a8ff;
-    color: #fff;
-    box-shadow: 0 0 15px rgba(0, 168, 255, 0.45); /* Mavi parlama */
-    font-weight: 700;
+  background: transparent; /* Canlı bir gökyüzü mavisi */
+  border-color: #09577e;
+  border: 3px solid #09577e;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(0, 168, 255, 0.45); /* Mavi parlama */
+  font-weight: 700;
 }
 
 .lobby-btn.game-val.active {
-    background: #ff4655;
-    border-color: #ff4655;
-    color: #fff;
-    box-shadow: 0 0 15px rgba(255, 70, 85, 0.4);
-  
+  background: transparent;
+  border-color: #ff4655;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(255, 70, 85, 0.4);
 }
 
 /* League of Legends (Mavi/Hextech) */
 .lobby-btn.game-lol.active {
-    background: #0ac8b9;
-    border-color: #0ac8b9;
-    color: #000;
-    box-shadow: 0 0 15px rgba(10, 200, 185, 0.4);
+  background: transparent;
+  border-color: #0ac8b9;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(10, 200, 185, 0.4);
 }
 
 /* CS2 (Turuncu) */
 .lobby-btn.game-cs.active {
-    background: #de9b35;
-    border-color: #de9b35;
-    color: #000;
-    box-shadow: 0 0 15px rgba(222, 155, 53, 0.4);
+  background: transparent;
+  border-color: #de9b35;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(222, 155, 53, 0.4);
 }
-
-
 
 /* --- YENİ OYUN RENKLERİ --- */
 
 /* EA Sports FC (İkonik Neon Yeşil) */
 .lobby-btn.game-fc.active {
-    background: #15f563; /* FC markasının resmi üçgen yeşili */
-    border-color: #15f563;
-    color: #081a10; /* Yazı koyu olsun ki okunsun */
-    box-shadow: 0 0 15px rgba(21, 245, 99, 0.4);
-    
+  background: transparent; /* FC markasının resmi üçgen yeşili */
+  border-color: #15f563;
+  color: #fff; /* Yazı koyu olsun ki okunsun */
+  box-shadow: 0 0 15px rgba(21, 245, 99, 0.4);
 }
 
 /* ARC Raiders (Retro Sci-Fi Turuncu/Kırmızı) */
 .lobby-btn.game-arc.active {
-    background: #ff3f1a; /* Uyarı tonunda canlı bir kırmızı-turuncu */
-    border-color: #ff3f1a;
-    color: #fff;
-    box-shadow: 0 0 15px rgba(255, 63, 26, 0.5);
-    
+  background: transparent; /* Uyarı tonunda canlı bir kırmızı-turuncu */
+  border-color: #ff3f1a;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(255, 63, 26, 0.5);
 }
 /* --- MODERN KAYDIRMA ÇUBUĞU (SCROLLBAR) --- */
 
 /* Mesaj kutusu ve lobiler için */
 ul.messages::-webkit-scrollbar,
 .lobbies::-webkit-scrollbar {
-  width: 8px;  /* Dikey çubuk genişliği */
+  width: 8px; /* Dikey çubuk genişliği */
   height: 8px; /* Yatay çubuk yüksekliği */
 }
-
-.val {
-  background-color: transparent !important;
-  ]
 
 /* Çubuğun arka plan yolu */
 ul.messages::-webkit-scrollbar-track,
 .lobbies::-webkit-scrollbar-track {
-  background: #0f141a; 
+  background: #0f141a;
   border-radius: 4px;
 }
 
 /* Hareket eden çubuk kısmı */
 ul.messages::-webkit-scrollbar-thumb,
 .lobbies::-webkit-scrollbar-thumb {
-  background: #343b48; 
+  background: #343b48;
   border-radius: 4px;
 }
 
@@ -403,3 +396,9 @@ ul.messages::-webkit-scrollbar-thumb:hover,
   background: #22e56f; /* Tema rengin */
 }
 
+.val {
+  object-fit: contain; /* Resmi bozmadan sığdır */
+  display: block;
+  background: transparent !important;
+  border: none;
+}
