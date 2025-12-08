@@ -1,147 +1,164 @@
-/* SIFIRLAMA */
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
 
 body {
-  background-color: #0f1217; /* Arka plan rengi */
-  color: white;
-  height: 100vh;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  /* Arka plan görseli varsa */
+  /* background: url("image/wp.jpg") no-repeat center center fixed; */
+  background-color: #060b10;
+  background-size: cover;
+}
+
+.blur {
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+/* --- GİRİŞ EKRANI --- */
+#loginModal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: #000; /* Resim eklemek istersen burayı değiştir */
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden; /* Sayfa kaymasını engelle */
+  z-index: 9999;
+  transition: opacity 0.5s ease;
+}
+#loginModal.hidden {
+  display: none;
 }
 
-/* --- ANA DÜZEN (Layout) --- */
-.app-layout {
-  display: flex;
-  width: 95vw;
-  height: 90vh;
-  gap: 15px;
-  background: #1e2530;
+.login-card {
+  width: 400px;
+  background: #141820;
+  padding: 30px;
   border-radius: 15px;
-  padding: 15px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  transition: filter 0.3s;
+  text-align: center;
+  border: 1px solid #333;
 }
+.logo-title { font-size: 2rem; font-weight: bold; color: #fff; margin-bottom: 5px; }
+.logo-subtitle { color: #888; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 20px; }
+.login-tagline { color: #aaa; margin-bottom: 20px; font-size: 0.9rem; }
 
-.blur { filter: blur(8px); pointer-events: none; }
-.hidden { display: none !important; }
-
-/* --- SOL TARAFTAKİ SOHBET --- */
-.chat-section {
-  flex: 2; /* Genişlik oranı 2 birim */
-  display: flex;
-  flex-direction: column;
-  background: #151a21;
-  border-radius: 10px;
-  padding: 10px;
-}
-
-/* --- SAĞ TARAFTAKİ ÖZEL MESAJ --- */
-.private-section {
-  flex: 1; /* Genişlik oranı 1 birim */
-  display: flex;
-  flex-direction: column;
-  background: #0b0e11;
-  border: 1px solid #22e56f; /* Yeşil Çerçeve */
-  border-radius: 10px;
-  padding: 10px;
-}
-
-/* --- ODALAR VE BAŞLIKLAR --- */
-.rooms-header {
-  display: flex;
-  gap: 10px;
-  padding-bottom: 10px;
-  overflow-x: auto;
-  margin-bottom: 10px;
-  border-bottom: 1px solid #333;
-}
-.room-btn {
-  background: #2a3442;
-  border: none;
-  color: #aaa;
-  padding: 8px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.room-btn.active { background: #22e56f; color: #000; font-weight: bold; }
-
-/* VALORANT ÖZEL */
-.room-btn.val:hover { color: #ff4655; }
-.room-btn.val.active { background: #ff4655; color: #fff; }
-
-/* --- MESAJ ALANI --- */
-.chat-window { flex: 1; overflow-y: auto; margin-bottom: 10px; }
-.message-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-
-.message-list li {
-  background: rgba(255,255,255,0.05);
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  word-wrap: break-word;
-}
-.message-list li.mine {
-  background: rgba(34, 229, 111, 0.1);
-  border-left: 3px solid #22e56f;
-  align-self: flex-end; /* Kendi mesajım sağa yaslı olsun istersen aç */
-}
-
-/* İsimler ve Tıklama */
-.sender { font-weight: bold; color: #22e56f; cursor: pointer; margin-right: 5px; }
-.sender:hover { text-decoration: underline; }
-.date { font-size: 0.7rem; color: #666; float: right; }
-
-/* --- INPUT ALANI --- */
-.input-area { display: flex; gap: 10px; margin-top: auto; }
-.input-area input {
-  flex: 1;
-  padding: 10px;
-  background: #2a3442;
-  border: none;
-  color: white;
+.login-input-group { margin: 20px 0; display: flex; flex-direction: column; gap: 10px; }
+.input-border {
+  width: 100%;
+  padding: 12px;
+  background: #0a0d12;
+  border: 1px solid #333;
+  color: #fff;
   border-radius: 5px;
+  outline: none;
 }
-.input-area button {
-  padding: 0 20px;
+.input-border:focus { border-color: #22e56f; }
+
+.login-button {
+  width: 100%;
+  padding: 12px;
   background: #22e56f;
   border: none;
   border-radius: 5px;
   font-weight: bold;
   cursor: pointer;
+  font-size: 1rem;
 }
+.login-button:hover { background: #1bc45d; }
 
-/* --- DM ÖZEL STİLLER --- */
-.private-header {
+/* --- SOHBET KUTUSU (Tek Parça) --- */
+.chat-container {
+  width: 900px;
+  height: 80vh;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #333;
-  color: #22e56f;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
-.dm-placeholder { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: #555; }
-.dm-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-/* --- LOGIN MODAL --- */
-.login-modal {
-  position: fixed; inset: 0;
-  background: #000;
-  display: flex; justify-content: center; align-items: center;
-  z-index: 999;
+h2 { margin-bottom: 15px; color: #22e56f; text-align: center; }
+
+/* Lobiler */
+.lobbies {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #333;
 }
-.login-card {
-  background: #151a21; padding: 40px;
-  border-radius: 15px; border: 1px solid #333;
-  text-align: center; width: 350px;
+.lobby-btn {
+  background: #1b2838;
+  border: 1px solid #333;
+  color: #aaa;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.login-inputs input {
-  width: 100%; padding: 12px; margin: 10px 0;
-  background: #0a0c10; border: 1px solid #333; color: white;
+.lobby-btn img { width: 18px; height: 18px; }
+.lobby-btn:hover { background: #2a3f55; color: #fff; }
+.lobby-btn.active { background: #22e56f; color: #000; font-weight: bold; }
+
+/* Mesajlar */
+ul.messages {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  padding: 10px;
+  margin-bottom: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
 }
-#loginBtn {
-  width: 100%; padding: 12px; background: #22e56f;
-  border: none; font-weight: bold; cursor: pointer; margin-top: 10px;
+
+li.message {
+  margin-bottom: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  word-wrap: break-word;
+}
+li.message.mine {
+  background: rgba(34, 229, 111, 0.15);
+  border-left: 3px solid #22e56f;
+}
+
+.message-header { display: flex; align-items: center; margin-bottom: 5px; font-size: 0.85rem; }
+.sender { font-weight: bold; color: #22e56f; margin-right: 10px; }
+.date { color: #888; font-size: 0.75rem; }
+.text { line-height: 1.4; }
+
+/* Input */
+.input { display: flex; gap: 10px; }
+.input input {
+  flex: 1;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #111;
+  color: #fff;
+  outline: none;
+}
+.input button {
+  padding: 0 25px;
+  border: none;
+  background: #22e56f;
+  color: #000;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
 }
