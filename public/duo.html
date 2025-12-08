@@ -3,66 +3,59 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DuoBul Sohbet</title>
+    <title>DuoBul - Oyuncu Bul</title>
     <link rel="stylesheet" href="style.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
   </head>
   <body>
+    
     <div id="loginModal" class="login-modal">
       <div class="login-card">
         <div class="logo-area">
-          <div class="logo-circle"></div>
-          <div class="logo-texts">
-            <div class="logo-title">DuoBul</div>
-            <div class="logo-subtitle">OYUNCU ARKADAŞINI BUL</div>
-          </div>
+          <h1>DuoBul</h1>
+          <p>Oyuncu Arkadaşını Bul</p>
         </div>
-        <p class="login-tagline">Kayıtlı hesabınla giriş yap, oyuna katıl.</p>
-
-        <div class="login-input-group">
-          <input class="input-border" type="text" id="usernameInput" placeholder="Kullanıcı Adı" />
-          <input class="input-border" type="password" id="passwordInput" placeholder="Şifre" style="margin-top: 10px;" />
+        <div class="login-inputs">
+          <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" />
+          <input type="password" id="passwordInput" placeholder="Şifre" />
+          <button id="loginBtn">Giriş Yap / Kayıt Ol ➤</button>
         </div>
-        <button id="loginBtn" class="login-button">Giriş Yap / Kayıt Ol ➤</button>
       </div>
     </div>
 
     <div class="app-layout blur" id="appLayout">
       
-      <div class="chat-container">
-        <h2>Sohbet Odaları</h2>
-        <div class="lobbies">
-          <button class="lobby-btn active" data-room="genel">Genel</button>
-          <button class="lobby-btn game-val" data-room="val"><img src="/icon/valo.png" class="val" />Valorant</button>
-          <button class="lobby-btn game-lol" data-room="lol"><img src="/icon/lol.png" class="val" />LoL</button>
-          <button class="lobby-btn game-cs" data-room="cs"><img src="/icon/cs22.png" class="val" />CS 2</button>
-          <button class="lobby-btn game-fc" data-room="fc"><img src="/icon/fc26.png" class="val" />FC 26</button>
-          <button class="lobby-btn game-arc" data-room="arc"><img src="/icon/arc.png" class="val" />ARC Raiders</button>
+      <div class="chat-section">
+        <div class="rooms-header">
+          <button class="room-btn active" data-room="genel">Genel</button>
+          <button class="room-btn val" data-room="val">Valorant</button>
+          <button class="room-btn lol" data-room="lol">LoL</button>
+          <button class="room-btn cs" data-room="cs">CS 2</button>
+          <button class="room-btn fc" data-room="fc">FC 26</button>
         </div>
 
-        <ul class="messages" id="publicMessages"></ul>
-        <div class="input">
-          <input type="text" id="msgInput" placeholder="Buraya yaz..." />
+        <div class="chat-window">
+          <ul id="publicMessages" class="message-list"></ul>
+        </div>
+
+        <div class="input-area">
+          <input type="text" id="msgInput" placeholder="Genel sohbete yaz..." />
           <button id="sendBtn">➤</button>
         </div>
       </div>
 
-      <div class="private-sidebar" id="privateSidebar">
+      <div class="private-section" id="privateSidebar">
         <div class="private-header">
           <h3 id="dmTitle">Özel Mesaj</h3>
-          <button id="closeDmBtn" class="close-dm">X</button>
+          <button id="closeDmBtn" style="display:none;">X</button>
         </div>
-        
+
         <div id="dmPlaceholder" class="dm-placeholder">
           <p>Mesajlaşmak için soldaki sohbetten bir isme tıkla.</p>
         </div>
 
         <div id="dmContent" class="dm-content hidden">
-          <ul class="messages" id="privateMessagesList"></ul>
-          <div class="input">
+          <ul id="privateMessagesList" class="message-list"></ul>
+          <div class="input-area">
             <input type="text" id="dmInput" placeholder="Özel mesaj..." />
             <button id="dmSendBtn">➤</button>
           </div>
