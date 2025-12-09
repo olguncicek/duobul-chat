@@ -13,6 +13,11 @@ const msgInput = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
 const messagesUl = document.querySelector(".messages");
 const lobbyBtns = document.querySelectorAll(".lobby-btn");
+const regName = document.getElementById("regName");
+const regSurname = document.getElementById("regSurname");
+const regYear = document.getElementById("regYear");
+const regEmail = document.getElementById("regEmail");
+const regPass = document.getElementById("regPass");
 
 let myUsername = "";
 let currentRoom = "genel"; 
