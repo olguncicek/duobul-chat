@@ -178,3 +178,49 @@ function updateAllUserStatuses() {
 function scrollToBottom() {
   messagesUl.scrollTop = messagesUl.scrollHeight;
 }
+/* ---------- KAYIT MODALI İŞLEMLERİ ---------- */
+
+// 1. Giriş ekranındaki "Kayıt Ol" butonuna basınca
+if (registerBtn) {
+  registerBtn.addEventListener("click", () => {
+    loginModal.classList.add("hidden");   // Giriş ekranını gizle
+    registerModal.classList.remove("hidden"); // Kayıt ekranını aç
+  });
+}
+
+// 2. Kayıt ekranındaki "Giriş Ekranına Dön" butonuna basınca
+if (backToLoginBtn) {
+  backToLoginBtn.addEventListener("click", () => {
+    registerModal.classList.add("hidden"); // Kayıt ekranını gizle
+    loginModal.classList.remove("hidden");   // Giriş ekranını aç
+  });
+}
+
+// 3. "Kaydı Tamamla" butonuna basınca
+if (doRegisterBtn) {
+  doRegisterBtn.addEventListener("click", () => {
+    // Basit bir doğrulama
+    if (!regName.value || !regSurname.value || !regYear.value || !regEmail.value || !regPass.value) {
+      alert("Lütfen tüm alanları doldur!");
+      return;
+    }
+
+    // Şimdilik veritabanı olmadığı için başarılı gibi davranıyoruz
+    console.log("Kayıt Bilgileri:", {
+      Ad: regName.value,
+      Soyad: regSurname.value,
+      Yil: regYear.value,
+      Email: regEmail.value,
+      Sifre: regPass.value
+    });
+
+    alert("Kayıt Başarılı! Şimdi giriş yapabilirsin.");
+    
+    // Formu temizle ve giriş ekranına at
+    regName.value = ""; regSurname.value = ""; regYear.value = ""; 
+    regEmail.value = ""; regPass.value = "";
+    
+    registerModal.classList.add("hidden");
+    loginModal.classList.remove("hidden");
+  });
+}
