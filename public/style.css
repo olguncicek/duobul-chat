@@ -29,7 +29,8 @@ body {
 .login-modal {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at top left, #1b2838, #060b10);
+  background: url("image/i.jpg") no-repeat center center;
+  background-size: cover; /* Resmi ekrana tam sığdırır */
   display: flex;
   align-items: center;
   justify-content: center;
