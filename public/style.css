@@ -129,12 +129,33 @@ body {
   transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.1s ease;
 }
 
+
 .login-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 16px 40px rgba(34, 229, 111, 0.48);
   background: #26f377;
 }
+/* Kayıt Ol Butonu */
+.register-button {
+  width: 100%;
+  padding: 10px 0;
+  margin-top: 12px; /* Giriş butonuyla arasına boşluk */
+  border: 2px solid #343b48; /* Koyu gri çerçeve */
+  border-radius: 12px;
+  background: transparent; /* Arka plan şeffaf */
+  color: #9ba4b4; /* Yazı rengi gri */
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
+.register-button:hover {
+  border-color: #22e56f; /* Üzerine gelince yeşil çerçeve */
+  color: #fff; /* Yazı beyazlaşır */
+  background: rgba(34, 229, 111, 0.1); /* Hafif yeşil arka plan */
+  transform: translateY(-1px);
+}
 /* Sohbet kutusu */
 .chat-container {
   width: 80%; /* 75% → 90% yap */
