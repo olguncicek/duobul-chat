@@ -11,7 +11,6 @@
     />
   </head>
   <body>
-    <!-- Giriş ekranı -->
     <div id="loginModal" class="login-modal">
       <div class="login-card">
         <div class="logo-area">
@@ -19,44 +18,8 @@
           <div class="logo-texts">
             <div class="logo-title">DuoBul</div>
             <div class="logo-subtitle">OYUNCU ARKADAŞINI BUL</div>
-          
+          </div>
         </div>
-          <div id="registerModal" class="login-modal hidden">
-  <div class="login-card" style="max-height: 90vh; overflow-y: auto;">
-    <div class="logo-area">
-      <div class="logo-circle"></div>
-      <div class="logo-texts">
-        <div class="logo-title">DuoBul</div>
-        <div class="logo-subtitle">YENİ HESAP OLUŞTUR</div>
-      </div>
-    </div>
-    <p class="login-tagline">Aramıza katıl, takımını kur.</p>
-
-    <div class="register-form">
-      <div class="login-input-group">
-        <input type="text" id="regName" placeholder="Adın" />
-      </div>
-      <div class="login-input-group">
-        <input type="text" id="regSurname" placeholder="Soyadın" />
-      </div>
-      <div class="login-input-group">
-        <input type="number" id="regYear" placeholder="Doğum Yılı (Örn: 2000)" min="1950" max="2015" />
-      </div>
-      <div class="login-input-group">
-        <input type="email" id="regEmail" placeholder="E-posta Adresi" />
-      </div>
-      <div class="login-input-group">
-        <input type="password" id="regPass" placeholder="Şifre Belirle" />
-      </div>
-
-      <button id="doRegisterBtn" class="login-button">Kaydı Tamamla ➤</button>
-      
-      <button id="backToLoginBtn" class="register-button" style="margin-top: 10px; border: none; color: #6c7484;">
-        <i class="fa-solid fa-arrow-left"></i> Giriş Ekranına Dön
-      </button>
-    </div>
-  </div>
-</div>
         <p class="login-tagline">Anında Bağlan, Hemen Oyna.</p>
 
         <div class="login-input-group">
@@ -67,12 +30,50 @@
             placeholder="Kullanıcı Adı Gir..."
           />
         </div>
+        
         <button id="loginBtn" class="login-button">Giriş Yap ➤</button>
+        
         <button id="registerBtn" class="register-button">Kayıt Ol</button>
       </div>
     </div>
 
-    <!-- Sohbet kutusu -->
+    <div id="registerModal" class="login-modal hidden">
+      <div class="login-card" style="max-height: 90vh; overflow-y: auto;">
+        <div class="logo-area">
+          <div class="logo-circle"></div>
+          <div class="logo-texts">
+            <div class="logo-title">DuoBul</div>
+            <div class="logo-subtitle">YENİ HESAP OLUŞTUR</div>
+          </div>
+        </div>
+        <p class="login-tagline">Takımını kurmak için aramıza katıl.</p>
+    
+        <div class="register-form">
+          <div class="login-input-group">
+            <input type="text" id="regName" placeholder="Adın" />
+          </div>
+          <div class="login-input-group">
+            <input type="text" id="regSurname" placeholder="Soyadın" />
+          </div>
+          <div class="login-input-group">
+            <input type="number" id="regYear" placeholder="Doğum Yılı (Örn: 2000)" min="1950" max="2015" />
+          </div>
+          <div class="login-input-group">
+            <input type="email" id="regEmail" placeholder="E-posta Adresi" />
+          </div>
+          <div class="login-input-group">
+            <input type="password" id="regPass" placeholder="Şifre Belirle" />
+          </div>
+    
+          <button id="doRegisterBtn" class="login-button">Kaydı Tamamla ➤</button>
+          
+          <button id="backToLoginBtn" class="register-button" style="margin-top: 10px; border: none; color: #6c7484;">
+            <i class="fa-solid fa-arrow-left"></i> Giriş Ekranına Dön
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="chat-container blur" id="chatContainer">
       <h2>Sohbet</h2>
       <div class="lobbies">
