@@ -5,6 +5,9 @@ const loginModal = document.getElementById("loginModal");
 const usernameInput = document.getElementById("usernameInput");
 const loginBtn = document.getElementById("loginBtn");
 const chatContainer = document.getElementById("chatContainer");
+const registerModal = document.getElementById("registerModal");
+const backToLoginBtn = document.getElementById("backToLoginBtn");
+const doRegisterBtn = document.getElementById("doRegisterBtn");
 
 const msgInput = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
