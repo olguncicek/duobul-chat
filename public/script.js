@@ -49,15 +49,45 @@ if (backToLoginBtn) {
   });
 }
 
-// Kayıt Butonu ve Doğrulama
+/* script.js - Kayıt Bölümü Güncellemesi */
+
 if (doRegisterBtn) {
   doRegisterBtn.addEventListener("click", () => {
-    // Değerleri al ve boşlukları temizle
-    const name = regName.value.trim();
-    const surname = regSurname.value.trim();
-    const year = regYear.value.trim();
-    const email = regEmail.value.trim();
-    const pass = regPass.value.trim();
+    // ... (input değerlerini alma ve kontroller aynı kalsın) ...
+
+    // HATA YOKSA SUNUCUYA GÖNDER:
+    const userData = {
+       name: regName.value.trim(),
+       surname: regSurname.value.trim(),
+       year: regYear.value.trim(),
+       email: regEmail.value.trim(),
+       password: regPass.value.trim()
+    };
+
+    // Firebase'e kaydetmesi için sunucuya yolla
+    socket.emit("registerUser", userData);
+  });
+}
+
+// Sunucudan cevap gelince (script.js'nin en altına ekleyebilirsin)
+socket.on("registerResponse", (response) => {
+    if (response.success) {
+        alert("Kayıt Veritabanına Başarıyla Eklendi! Giriş yapabilirsin.");
+        
+        // Formu temizle
+        document.getElementById("regName").value = "";
+        document.getElementById("regSurname").value = "";
+        document.getElementById("regYear").value = "";
+        document.getElementById("regEmail").value = "";
+        document.getElementById("regPass").value = "";
+
+        // Giriş ekranına dön
+        document.getElementById("registerModal").classList.add("hidden");
+        document.getElementById("loginModal").classList.remove("hidden");
+    } else {
+        alert("Hata: " + response.message);
+    }
+});
 
     // A) BOŞ ALAN KONTROLÜ
     if (!name || !surname || !year || !email || !pass) {
