@@ -9,12 +9,14 @@ const admin = require("firebase-admin");
 let serviceAccount;
 
 try {
+  // Eğer Railway üzerindeysek (Environment Variable varsa)
   if (process.env.FIREBASE_KEY) {
-    // A) Railway üzerindeysek: Gizli Değişkenden (Variable) oku
     console.log("--> Railway ortamı algılandı. Anahtar Variable'dan okunuyor...");
+    // Gelen veri String olduğu için JSON objesine çeviriyoruz
     serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
-  } else {
-    // B) Bilgisayarımızdaysak: Dosyadan oku
+  } 
+  // Eğer Local bilgisayardaysak (Dosya varsa)
+  else {
     console.log("--> Local ortam algılandı. 'firebase-key.json' okunuyor...");
     serviceAccount = require("./firebase-key.json");
   }
@@ -24,9 +26,10 @@ try {
   });
   
   console.log("--> Firebase bağlantısı BAŞARILI!");
+
 } catch (error) {
   console.error("!!! FIREBASE HATASI !!!");
-  console.error("Sebep: Anahtar bulunamadı veya hatalı.");
+  console.error("Sebep: Anahtar bulunamadı veya format hatalı.");
   console.error("Detay:", error.message);
 }
 
