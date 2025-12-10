@@ -1,21 +1,24 @@
+/* public/script.js - TAM VE HATASIZ SÜRÜM */
+
 const socket = io();
 
-// HTML Elementleri - Genel
+// --- HTML Elementleri ---
 const loginModal = document.getElementById("loginModal");
-const usernameInput = document.getElementById("usernameInput");
-const loginBtn = document.getElementById("loginBtn");
+const registerModal = document.getElementById("registerModal");
 const chatContainer = document.getElementById("chatContainer");
 
-const msgInput = document.getElementById("msgInput");
-const sendBtn = document.getElementById("sendBtn");
-const messagesUl = document.querySelector(".messages");
-const lobbyBtns = document.querySelectorAll(".lobby-btn");
-
-// HTML Elementleri - Kayıt Ekranı
+// Butonlar
+const loginBtn = document.getElementById("loginBtn");
 const registerBtn = document.getElementById("registerBtn");
-const registerModal = document.getElementById("registerModal");
 const backToLoginBtn = document.getElementById("backToLoginBtn");
 const doRegisterBtn = document.getElementById("doRegisterBtn");
+const sendBtn = document.getElementById("sendBtn");
+
+// Inputlar
+const usernameInput = document.getElementById("usernameInput");
+const msgInput = document.getElementById("msgInput");
+const messagesUl = document.querySelector(".messages");
+const lobbyBtns = document.querySelectorAll(".lobby-btn");
 
 // Kayıt Formu Inputları
 const regName = document.getElementById("regName");
@@ -24,16 +27,40 @@ const regYear = document.getElementById("regYear");
 const regEmail = document.getElementById("regEmail");
 const regPass = document.getElementById("regPass");
 
-
 let myUsername = "";
 let currentRoom = "genel"; 
-const userStatusMap = {}; // Kim online, kim offline haritası
+const userStatusMap = {};
 
-/* =========================================
-   1. KAYIT OLMA İŞLEMLERİ (YENİ EKLENDİ)
-   ========================================= */
+/* ===========================
+   1. GİRİŞ İŞLEMLERİ
+   =========================== */
+function doLogin() {
+  const name = usernameInput.value.trim();
+  if (!name) {
+    alert("Lütfen bir kullanıcı adı gir!");
+    return;
+  }
+  myUsername = name;
+  socket.emit("setUsername", myUsername);
+  
+  loginModal.classList.add("hidden");
+  chatContainer.classList.remove("blur");
+}
 
-// Giriş Ekranından -> Kayıt Ekranına Geçiş
+if (loginBtn) {
+  loginBtn.addEventListener("click", doLogin);
+}
+
+if (usernameInput) {
+  usernameInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") doLogin();
+  });
+}
+
+/* ===========================
+   2. KAYIT İŞLEMLERİ
+   =========================== */
+// Giriş -> Kayıt Ekranına Geçiş
 if (registerBtn) {
   registerBtn.addEventListener("click", () => {
     loginModal.classList.add("hidden");
@@ -41,7 +68,7 @@ if (registerBtn) {
   });
 }
 
-// Kayıt Ekranından -> Geri Dönüş
+// Kayıt -> Giriş Ekranına Dönüş
 if (backToLoginBtn) {
   backToLoginBtn.addEventListener("click", () => {
     registerModal.classList.add("hidden");
@@ -49,235 +76,95 @@ if (backToLoginBtn) {
   });
 }
 
-/* script.js - Kayıt Bölümü Güncellemesi */
-
+// Kayıt Ol Butonu
 if (doRegisterBtn) {
   doRegisterBtn.addEventListener("click", () => {
-    // ... (input değerlerini alma ve kontroller aynı kalsın) ...
-
-    // HATA YOKSA SUNUCUYA GÖNDER:
     const userData = {
-       name: regName.value.trim(),
-       surname: regSurname.value.trim(),
-       year: regYear.value.trim(),
-       email: regEmail.value.trim(),
-       password: regPass.value.trim()
+      name: regName.value.trim(),
+      surname: regSurname.value.trim(),
+      year: regYear.value.trim(),
+      email: regEmail.value.trim(),
+      password: regPass.value.trim()
     };
 
-    // Firebase'e kaydetmesi için sunucuya yolla
+    if (!userData.name || !userData.email || !userData.password) {
+      alert("Lütfen gerekli alanları doldurun.");
+      return;
+    }
+
+    // Sunucuya gönder
     socket.emit("registerUser", userData);
   });
 }
 
-// Sunucudan cevap gelince (script.js'nin en altına ekleyebilirsin)
+// Sunucudan Kayıt Cevabı Gelince
 socket.on("registerResponse", (response) => {
-    if (response.success) {
-        alert("Kayıt Veritabanına Başarıyla Eklendi! Giriş yapabilirsin.");
-        
-        // Formu temizle
-        document.getElementById("regName").value = "";
-        document.getElementById("regSurname").value = "";
-        document.getElementById("regYear").value = "";
-        document.getElementById("regEmail").value = "";
-        document.getElementById("regPass").value = "";
-
-        // Giriş ekranına dön
-        document.getElementById("registerModal").classList.add("hidden");
-        document.getElementById("loginModal").classList.remove("hidden");
-    } else {
-        alert("Hata: " + response.message);
-    }
-});
-
-    // A) BOŞ ALAN KONTROLÜ
-    if (!name || !surname || !year || !email || !pass) {
-      alert("Hata: Lütfen tüm alanları doldurun!");
-      return;
-    }
-
-    // B) DOĞUM YILI KONTROLÜ
-    const currentYear = new Date().getFullYear();
-    const birthYear = parseInt(year);
-
-    if (isNaN(birthYear) || birthYear < 1950 || birthYear > currentYear - 5) {
-      alert(`Hata: Lütfen geçerli bir doğum yılı girin! (1950 - ${currentYear - 5} arası)`);
-      return;
-    }
-
-    // C) E-POSTA FORMAT KONTROLÜ (Regex)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      alert("Hata: Lütfen geçerli bir e-posta adresi girin! (Örn: ornek@gmail.com)");
-      return;
-    }
-
-    // D) HER ŞEY BAŞARILI
-    console.log("KAYIT BAŞARILI:", { name, surname, year, email });
-    alert("Tebrikler! Başarıyla kayıt olundu. Giriş ekranına yönlendiriliyorsunuz.");
-
-    // Formu temizle
-    regName.value = ""; regSurname.value = ""; regYear.value = ""; 
-    regEmail.value = ""; regPass.value = "";
-
-    // Giriş ekranını aç
+  if (response.success) {
+    alert("Kayıt Başarılı! Giriş yapabilirsin.");
     registerModal.classList.add("hidden");
     loginModal.classList.remove("hidden");
-  });
-}
-
-
-/* =========================================
-   2. GİRİŞ (LOGIN) İŞLEMLERİ
-   ========================================= */
-function doLogin() {
-  const name = usernameInput.value.trim();
-  if (!name) return;
-  myUsername = name;
-  
-  socket.emit("setUsername", myUsername);
-
-  loginModal.classList.add("hidden");
-  chatContainer.classList.remove("blur");
-  msgInput.focus();
-}
-
-loginBtn.addEventListener("click", doLogin);
-usernameInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") doLogin();
+    // Formu temizle
+    regName.value = ""; regEmail.value = ""; regPass.value = "";
+  } else {
+    alert("Hata: " + response.message);
+  }
 });
 
-
-/* =========================================
-   3. ODA DEĞİŞTİRME (LOBBY)
-   ========================================= */
+/* ===========================
+   3. ODA VE MESAJ İŞLEMLERİ
+   =========================== */
 lobbyBtns.forEach((btn) => {
   btn.addEventListener("click", () => {
     const roomName = btn.dataset.room;
     if (roomName === currentRoom) return;
 
-    // Aktif butonu değiştir
     document.querySelector(".lobby-btn.active").classList.remove("active");
     btn.classList.add("active");
-
-    // Ekranı temizle
     messagesUl.innerHTML = "";
     
-    // Sunucuya bildir
     socket.emit("joinRoom", roomName);
     currentRoom = roomName;
   });
 });
 
-
-/* =========================================
-   4. MESAJ GÖNDERME
-   ========================================= */
 function sendMessage() {
   const text = msgInput.value.trim();
   if (!text) return;
-
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-  // Sunucuya gönder
   socket.emit("sendMessage", { text, time });
   msgInput.value = "";
-  msgInput.focus();
 }
 
-sendBtn.addEventListener("click", sendMessage);
-msgInput.addEventListener("keypress", (e) => {
+if (sendBtn) sendBtn.addEventListener("click", sendMessage);
+if (msgInput) msgInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendMessage();
 });
 
-
-/* =========================================
-   5. SOCKET OLAYLARI (Mesaj Alma, Durum)
-   ========================================= */
-
-// Mesaj Geldiğinde
-socket.on("newMessage", (msg) => {
-  addMessageToUI(msg.username, msg.text, msg.time);
-});
-
-// Geçmiş Mesajlar Yüklendiğinde
-socket.on("loadHistory", (messages) => {
+/* ===========================
+   4. SOCKET OLAYLARI
+   =========================== */
+socket.on("newMessage", (msg) => addMessageToUI(msg));
+socket.on("loadHistory", (msgs) => {
   messagesUl.innerHTML = "";
-  messages.forEach((m) => addMessageToUI(m.username, m.text, m.time));
+  msgs.forEach(addMessageToUI);
 });
-
-// Birinin Durumu Değiştiğinde (Online/Offline)
-socket.on("userStatus", (data) => {
-  const { username, online } = data;
-  userStatusMap[username] = online ? "online" : "offline";
-  updateAllUserStatuses();
-});
-
-// Online Kullanıcılar Listesi Geldiğinde (İlk Giriş)
 socket.on("activeUsersList", (list) => {
-  list.forEach(u => {
-    userStatusMap[u] = "online";
-  });
-  updateAllUserStatuses();
+  list.forEach(u => userStatusMap[u] = "online");
+});
+socket.on("userStatus", (data) => {
+  userStatusMap[data.username] = data.online ? "online" : "offline";
 });
 
-// UI: Mesaj Ekleme Fonksiyonu
-function addMessageToUI(username, text, time) {
+function addMessageToUI(msg) {
   const li = document.createElement("li");
-  li.classList.add("message");
-  
-  // Mesajın kime ait olduğunu etikete yazıyoruz
-  li.dataset.username = username;
-
-  const header = document.createElement("div");
-  header.classList.add("message-header");
-
-  // Durum Noktası (Dot)
-  const dot = document.createElement("span");
-  dot.classList.add("status-dot");
-  
-  // Eğer online değilse kırmızı (offline) yap
-  if (userStatusMap[username] !== "online") {
-    dot.classList.add("offline");
-  }
-
-  const sender = document.createElement("span");
-  sender.classList.add("sender");
-  sender.textContent = username;
-
-  const date = document.createElement("span");
-  date.classList.add("date");
-  date.textContent = time;
-
-  header.appendChild(dot);
-  header.appendChild(sender);
-  header.appendChild(date);
-
-  const textP = document.createElement("p");
-  textP.classList.add("text");
-  textP.textContent = text;
-
-  li.appendChild(header);
-  li.appendChild(textP);
-
+  li.className = "message";
+  li.innerHTML = `
+    <div class="message-header">
+       <span class="sender">${msg.username}</span>
+       <span class="date">${msg.time}</span>
+    </div>
+    <p class="text">${msg.text}</p>
+  `;
   messagesUl.appendChild(li);
-  scrollToBottom();
-}
-
-// UI: Işıkları Güncelle
-function updateAllUserStatuses() {
-  const allMessages = document.querySelectorAll("li.message");
-  allMessages.forEach(li => {
-    const uName = li.dataset.username;
-    const dot = li.querySelector(".status-dot");
-    
-    if (userStatusMap[uName] === "online") {
-      dot.classList.remove("offline");
-    } else {
-      dot.classList.add("offline");
-    }
-  });
-}
-
-function scrollToBottom() {
   messagesUl.scrollTop = messagesUl.scrollHeight;
 }
