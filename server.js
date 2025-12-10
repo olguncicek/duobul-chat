@@ -4,28 +4,46 @@ const socketIo = require("socket.io");
 const admin = require("firebase-admin");
 
 /* ===================================================
-   1. FIREBASE KURULUMU (FIXED VERSION)
+   1. FIREBASE KURULUMU (DEBUG MODU)
    =================================================== */
 let serviceAccount;
 
 try {
-  // A) RAILWAY ORTAMI (Değişken Varsa)
-  if (process.env.FIREBASE_KEY) {
-    console.log("--> Railway ortamı algılandı. Değişken okunuyor...");
-    
-    // 1. JSON verisini çevir
-    serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
+  console.log("--- FIREBASE BAĞLANTI KONTROLÜ BAŞLIYOR ---");
 
-    // 2. [KRİTİK DÜZELTME] Private Key içindeki \n karakterlerini düzelt
-    // Railway bazen satır atlamaları metin olarak algılar, bunu düzeltiyoruz:
-    if (serviceAccount.private_key) {
-      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+  if (process.env.FIREBASE_KEY) {
+    console.log("1. Railway ortamı algılandı.");
+    
+    // Değişkeni oku
+    const rawKey = process.env.FIREBASE_KEY;
+    console.log(`2. Okunan veri uzunluğu: ${rawKey.length} karakter.`);
+
+    // JSON'a çevir
+    serviceAccount = JSON.parse(rawKey);
+    console.log("3. JSON Parse işlemi: BAŞARILI.");
+
+    // Kontroller
+    if (!serviceAccount.project_id) console.error("!!! HATA: project_id bulunamadı!");
+    else console.log(`4. Proje ID: ${serviceAccount.project_id}`);
+
+    if (!serviceAccount.private_key) console.error("!!! HATA: private_key bulunamadı!");
+    else {
+      console.log("5. Private Key mevcut. Format düzeltiliyor...");
+      
+      // --- KRİTİK DÜZELTME ---
+      // Private key içindeki "\\n" karakterlerini gerçek "\n" (Enter) ile değiştiriyoruz.
+      const oldKey = serviceAccount.private_key;
+      const newKey = oldKey.replace(/\\n/g, '\n');
+      
+      serviceAccount.private_key = newKey;
+
+      // Düzeltme kontrolü (Sadece ilk 10 karakteri yazdırıyoruz, güvenlik için)
+      console.log(`6. Key Başlangıcı: ${newKey.substring(0, 25)}...`);
+      console.log(`7. Key İçinde '\\n' var mı?: ${newKey.includes("\\n") ? "EVET (HATA SEBEBİ BU)" : "HAYIR (DÜZELTİLDİ)"}`);
     }
 
-  } 
-  // B) LOCAL ORTAM (Dosya Varsa)
-  else {
-    console.log("--> Local ortam algılandı. Dosya okunuyor...");
+  } else {
+    console.log("1. Local ortam algılandı. Dosyadan okunuyor.");
     serviceAccount = require("./firebase-key.json");
   }
 
@@ -34,12 +52,12 @@ try {
     credential: admin.credential.cert(serviceAccount)
   });
   
-  console.log("--> Firebase bağlantısı BAŞARILI! (Yetkilendirme Tamam)");
+  console.log("--- FIREBASE BAĞLANTISI TAMAMLANDI ---");
 
 } catch (error) {
-  console.error("!!! FIREBASE BAĞLANTI HATASI !!!");
-  console.error("Hata Detayı:", error.message);
-  // Hata olsa bile sunucu çökmesin diye boş geçiyoruz ama veritabanı çalışmaz
+  console.error("!!! KRİTİK HATA !!!");
+  console.error("Hata Mesajı:", error.message);
+  // Eğer JSON.parse hatası varsa bunu görürüz
 }
 
 const db = admin.firestore();
@@ -49,16 +67,10 @@ const db = admin.firestore();
    =================================================== */
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: { origin: "*" }
-});
+const io = socketIo(server, { cors: { origin: "*" } });
 
-// Statik dosyaları sun
 app.use(express.static(__dirname + "/public"));
-
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/duo.html");
-});
+app.get("/", (req, res) => res.sendFile(__dirname + "/public/duo.html"));
 
 /* ===================================================
    3. SOCKET.IO İŞLEMLERİ
@@ -66,28 +78,28 @@ app.get("/", (req, res) => {
 const onlineUsers = new Map(); 
 
 io.on("connection", (socket) => {
-  // console.log("Bağlantı: " + socket.id); // Log kirliliği yapmasın
-
   let currentUser = null;
   let currentRoom = "genel"; 
   socket.join("genel");
 
-  // --- KAYIT OLMA ---
+  // KAYIT OLMA
   socket.on("registerUser", async (userData) => {
-    console.log("Kayıt isteği geldi:", userData.email);
+    console.log(`Kayıt isteği: ${userData.email}`);
     try {
       await db.collection("users").add({
         ...userData,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
+      console.log("Kayıt veritabanına yazıldı.");
       socket.emit("registerResponse", { success: true, message: "Kayıt Başarılı!" });
     } catch (error) {
-      console.error("Firebase Yazma Hatası:", error);
+      console.error("VERİTABANI YAZMA HATASI DETAYI:");
+      console.error(error); // Burası loglara asıl sebebi basacak
       socket.emit("registerResponse", { success: false, message: "Sunucu Hatası: " + error.message });
     }
   });
 
-  // --- GİRİŞ YAPMA ---
+  // GİRİŞ YAPMA
   socket.on("setUsername", (username) => {
     if (!username) return;
     currentUser = username;
@@ -97,7 +109,7 @@ io.on("connection", (socket) => {
     loadMessagesForRoom(currentRoom, socket);
   });
 
-  // --- ODA DEĞİŞTİRME ---
+  // ODA DEĞİŞTİRME
   socket.on("joinRoom", (roomName) => {
     socket.leave(currentRoom);
     socket.join(roomName);
@@ -105,11 +117,9 @@ io.on("connection", (socket) => {
     loadMessagesForRoom(currentRoom, socket);
   });
 
-  // --- MESAJ GÖNDERME ---
+  // MESAJ GÖNDERME
   socket.on("sendMessage", async (data) => {
     if (!currentUser) return;
-    
-    // Veritabanına
     try {
       await db.collection("messages").add({
         room: currentRoom,
@@ -120,7 +130,6 @@ io.on("connection", (socket) => {
       });
     } catch (e) { console.error("Mesaj hatası:", e); }
 
-    // Ekrana
     io.to(currentRoom).emit("newMessage", {
       username: currentUser,
       text: data.text,
