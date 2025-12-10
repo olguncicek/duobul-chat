@@ -223,4 +223,68 @@ if (doRegisterBtn) {
     registerModal.classList.add("hidden");
     loginModal.classList.remove("hidden");
   });
+  /* =========================================
+   KAYIT OL EKRANI VE BUTON İŞLEMLERİ
+   ========================================= */
+
+// 1. Elementleri Seçelim
+const registerBtn = document.getElementById("registerBtn");
+const registerModal = document.getElementById("registerModal");
+const backToLoginBtn = document.getElementById("backToLoginBtn");
+const doRegisterBtn = document.getElementById("doRegisterBtn");
+
+// Form Inputları
+const regName = document.getElementById("regName");
+const regSurname = document.getElementById("regSurname");
+const regYear = document.getElementById("regYear");
+const regEmail = document.getElementById("regEmail");
+const regPass = document.getElementById("regPass");
+
+// 2. "Kayıt Ol" butonuna basınca -> Girişi Gizle, Kayıt Ekranını Aç
+if (registerBtn) {
+  registerBtn.addEventListener("click", () => {
+    loginModal.classList.add("hidden");       // Giriş ekranını kapat
+    registerModal.classList.remove("hidden"); // Kayıt ekranını aç
+  });
+}
+
+// 3. "Giriş Ekranına Dön" butonuna basınca -> Kaydı Gizle, Girişi Aç
+if (backToLoginBtn) {
+  backToLoginBtn.addEventListener("click", () => {
+    registerModal.classList.add("hidden");  // Kayıt ekranını kapat
+    loginModal.classList.remove("hidden");    // Giriş ekranını aç
+  });
+}
+
+// 4. "Kaydı Tamamla" butonuna basınca
+if (doRegisterBtn) {
+  doRegisterBtn.addEventListener("click", () => {
+    // Boş alan kontrolü
+    if (!regName.value || !regSurname.value || !regYear.value || !regEmail.value || !regPass.value) {
+      alert("Lütfen tüm alanları doldur!");
+      return;
+    }
+
+    // Şimdilik veritabanı olmadığı için konsola yazdırıyoruz
+    console.log("YENİ KAYIT GELDİ:");
+    console.log("Ad:", regName.value);
+    console.log("Soyad:", regSurname.value);
+    console.log("D.Yılı:", regYear.value);
+    console.log("Email:", regEmail.value);
+    console.log("Şifre:", regPass.value);
+
+    alert("Kayıt Başarılı! Giriş ekranına yönlendiriliyorsunuz...");
+
+    // Formu temizle
+    regName.value = ""; 
+    regSurname.value = ""; 
+    regYear.value = ""; 
+    regEmail.value = ""; 
+    regPass.value = "";
+
+    // Giriş ekranına geri at
+    registerModal.classList.add("hidden");
+    loginModal.classList.remove("hidden");
+  });
+}
 }
