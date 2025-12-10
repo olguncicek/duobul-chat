@@ -158,7 +158,7 @@ async function loadMessagesForRoom(roomName, socket) {
   }
 }
 
-const PORT = 3000;
+const PORT = 8080;
 server.listen(PORT, () => {
   console.log(`Sunucu ${PORT} portunda ve Firebase aktif!`);
 });
