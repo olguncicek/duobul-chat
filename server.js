@@ -3,69 +3,85 @@ const http = require("http");
 const socketIo = require("socket.io");
 const admin = require("firebase-admin");
 
-// 1. FIREBASE KURULUMU
-// İndirdiğin JSON dosyasının adı 'firebase-key.json' olmalı ve bu dosya server.js ile yan yana olmalı.
-const serviceAccount = require("./firebase-key.json");
+/* ===================================================
+   1. FIREBASE KURULUMU (RAILWAY & LOCAL UYUMLU)
+   =================================================== */
+let serviceAccount;
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+try {
+  if (process.env.FIREBASE_KEY) {
+    // A) Railway üzerindeysek: Gizli Değişkenden (Variable) oku
+    console.log("--> Railway ortamı algılandı. Anahtar Variable'dan okunuyor...");
+    serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
+  } else {
+    // B) Bilgisayarımızdaysak: Dosyadan oku
+    console.log("--> Local ortam algılandı. 'firebase-key.json' okunuyor...");
+    serviceAccount = require("./firebase-key.json");
+  }
 
-const db = admin.firestore(); // Veritabanı aracı
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+  
+  console.log("--> Firebase bağlantısı BAŞARILI!");
+} catch (error) {
+  console.error("!!! FIREBASE HATASI !!!");
+  console.error("Sebep: Anahtar bulunamadı veya hatalı.");
+  console.error("Detay:", error.message);
+}
 
-// 2. EXPRESS VE SOCKET.IO KURULUMU
+const db = admin.firestore();
+
+/* ===================================================
+   2. SUNUCU AYARLARI
+   =================================================== */
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: { origin: "*" }
 });
 
-// Statik dosyalar
+// Statik dosyaları (HTML, CSS, JS) 'public' klasöründen sun
 app.use(express.static(__dirname + "/public"));
 
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public/duo.html");
 });
 
-// --- RAM BELLEK (Sadece anlık online durumu için) ---
-const onlineUsers = new Map(); // Kullanıcı Adı -> Socket ID
+/* ===================================================
+   3. SOCKET.IO İŞLEMLERİ (RAM + VERİTABANI)
+   =================================================== */
+// Anlık kimlerin online olduğunu RAM'de tutuyoruz (Hızlı olsun diye)
+const onlineUsers = new Map(); 
 
 io.on("connection", (socket) => {
-  console.log("Bir kullanıcı bağlandı: " + socket.id);
+  console.log("Yeni bağlantı: " + socket.id);
 
   let currentUser = null;
   let currentRoom = "genel"; 
   socket.join("genel");
 
-  /* -------------------------------------------------
-     A. KULLANICI KAYDI (REGISTRATION)
-     ------------------------------------------------- */
+  // --- A. KULLANICI KAYDI (REGISTER) ---
   socket.on("registerUser", async (userData) => {
     try {
-      // 1. Bu e-posta veya kullanıcı adı daha önce alınmış mı bakalım?
-      // (Basitlik adına şimdilik doğrudan kaydediyoruz)
-      
+      // Veritabanına ekle
       await db.collection("users").add({
         name: userData.name,
         surname: userData.surname,
         year: userData.year,
         email: userData.email,
-        password: userData.password, // Gerçek projede şifreler şifrelenmeli (hash)
+        password: userData.password, // İleride şifrelemeyi unutma
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      // Başarılı mesajı dön
-      socket.emit("registerResponse", { success: true, message: "Kayıt veritabanına eklendi!" });
-      
+      socket.emit("registerResponse", { success: true, message: "Kayıt Başarılı!" });
     } catch (error) {
       console.error("Kayıt hatası:", error);
-      socket.emit("registerResponse", { success: false, message: "Veritabanı hatası!" });
+      socket.emit("registerResponse", { success: false, message: "Veritabanı hatası oluştu." });
     }
   });
 
-  /* -------------------------------------------------
-     B. GİRİŞ YAPMA (Sohbete Katılma)
-     ------------------------------------------------- */
+  // --- B. GİRİŞ YAPMA (LOGIN) ---
   socket.on("setUsername", (username) => {
     if (!username) return;
     currentUser = username;
@@ -73,50 +89,44 @@ io.on("connection", (socket) => {
     // Online listesine ekle
     onlineUsers.set(username, true);
 
-    // Herkese duyur: "Bu kişi online oldu"
+    // Herkese duyur
     io.emit("userStatus", { username, online: true });
 
-    // Yeni girene aktif listeyi gönder
+    // Yeni girene aktif kullanıcıları gönder
     socket.emit("activeUsersList", Array.from(onlineUsers.keys()));
 
-    // Odanın geçmiş mesajlarını Firebase'den yükle
+    // Odanın geçmiş mesajlarını yükle
     loadMessagesForRoom(currentRoom, socket);
   });
 
-  /* -------------------------------------------------
-     C. ODA DEĞİŞTİRME
-     ------------------------------------------------- */
+  // --- C. ODA DEĞİŞTİRME ---
   socket.on("joinRoom", (roomName) => {
     socket.leave(currentRoom);
     socket.join(roomName);
     currentRoom = roomName;
 
-    // Yeni odanın mesajlarını veritabanından çek
+    // Yeni odanın mesajlarını yükle
     loadMessagesForRoom(currentRoom, socket);
   });
 
-  /* -------------------------------------------------
-     D. MESAJ GÖNDERME
-     ------------------------------------------------- */
+  // --- D. MESAJ GÖNDERME ---
   socket.on("sendMessage", async (data) => {
     if (!currentUser) return;
 
-    const messageData = {
-      room: currentRoom,
-      username: currentUser,
-      text: data.text,
-      time: data.time,
-      createdAt: admin.firestore.FieldValue.serverTimestamp() // Sıralama için sunucu saati
-    };
-
-    // 1. Önce Veritabanına Kaydet (Kalıcı Olsun)
+    // 1. Veritabanına Kaydet
     try {
-      await db.collection("messages").add(messageData);
+      await db.collection("messages").add({
+        room: currentRoom,
+        username: currentUser,
+        text: data.text,
+        time: data.time,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
     } catch (err) {
-      console.error("Mesaj kaydedilemedi:", err);
+      console.error("Mesaj kaydetme hatası:", err);
     }
 
-    // 2. Sonra Odadaki Herkese Gönder (Anlık Görünsün)
+    // 2. Canlı Olarak Gönder
     io.to(currentRoom).emit("newMessage", {
       username: currentUser,
       text: data.text,
@@ -124,9 +134,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  /* -------------------------------------------------
-     E. ÇIKIŞ YAPMA
-     ------------------------------------------------- */
+  // --- E. ÇIKIŞ YAPMA ---
   socket.on("disconnect", () => {
     if (currentUser) {
       onlineUsers.delete(currentUser);
@@ -135,13 +143,12 @@ io.on("connection", (socket) => {
   });
 });
 
-// YARDIMCI FONKSİYON: Mesajları Çekme
+// YARDIMCI FONKSİYON: Geçmiş Mesajları Çek
 async function loadMessagesForRoom(roomName, socket) {
   try {
-    // Firebase sorgusu: Odaya göre filtrele, tarihe göre tersten sırala, son 50'yi al
     const snapshot = await db.collection("messages")
       .where("room", "==", roomName)
-      .orderBy("createdAt", "desc") 
+      .orderBy("createdAt", "desc")
       .limit(50)
       .get();
 
@@ -150,15 +157,19 @@ async function loadMessagesForRoom(roomName, socket) {
       history.push(doc.data());
     });
 
-    // Veriler tersten (en yeni en başta) geldiği için çevirip gönderiyoruz
+    // Tersten geldiği için düzeltip gönder
     socket.emit("loadHistory", history.reverse());
-    
   } catch (error) {
     console.error("Geçmiş yüklenirken hata:", error);
   }
 }
 
-const PORT = 8080;
+/* ===================================================
+   4. SUNUCUYU BAŞLAT
+   =================================================== */
+// Railway'in atadığı portu kullan, yoksa 3000
+const PORT = process.env.PORT || 3000;
+
 server.listen(PORT, () => {
-  console.log(`Sunucu ${PORT} portunda ve Firebase aktif!`);
+  console.log(`Sunucu ${PORT} portunda çalışıyor...`);
 });
