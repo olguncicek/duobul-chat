@@ -1,106 +1,164 @@
 const express = require("express");
 const http = require("http");
-const app = express();
-const server = http.createServer(app);
-const { Server } = require("socket.io");
+const socketIo = require("socket.io");
+const admin = require("firebase-admin");
 
-const io = new Server(server, {
-  cors: {
-    origin: "*"
-  }
+// 1. FIREBASE KURULUMU
+// İndirdiğin JSON dosyasının adı 'firebase-key.json' olmalı ve bu dosya server.js ile yan yana olmalı.
+const serviceAccount = require("./firebase-key.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
 });
 
-// Statik dosyaları sun
+const db = admin.firestore(); // Veritabanı aracı
+
+// 2. EXPRESS VE SOCKET.IO KURULUMU
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: { origin: "*" }
+});
+
+// Statik dosyalar
 app.use(express.static(__dirname + "/public"));
 
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public/duo.html");
 });
 
-// --- VERİ HAVUZU ---
-const users = new Map(); // Kullanıcı Adı -> Bağlantı Sayısı
-const roomMessages = {}; // Oda Adı -> Mesajlar Dizisi []
+// --- RAM BELLEK (Sadece anlık online durumu için) ---
+const onlineUsers = new Map(); // Kullanıcı Adı -> Socket ID
 
 io.on("connection", (socket) => {
-  console.log("Bir kullanıcı bağlandı");
-  
-  let username = null;
-  let currentRoom = "genel"; // Varsayılan oda
+  console.log("Bir kullanıcı bağlandı: " + socket.id);
+
+  let currentUser = null;
+  let currentRoom = "genel"; 
   socket.join("genel");
 
-  // 1. KULLANICI GİRİŞ YAPTIĞINDA
-  socket.on("setUsername", (name) => {
-    if (!name) return;
-    username = name.trim();
-    if (!username) return;
+  /* -------------------------------------------------
+     A. KULLANICI KAYDI (REGISTRATION)
+     ------------------------------------------------- */
+  socket.on("registerUser", async (userData) => {
+    try {
+      // 1. Bu e-posta veya kullanıcı adı daha önce alınmış mı bakalım?
+      // (Basitlik adına şimdilik doğrudan kaydediyoruz)
+      
+      await db.collection("users").add({
+        name: userData.name,
+        surname: userData.surname,
+        year: userData.year,
+        email: userData.email,
+        password: userData.password, // Gerçek projede şifreler şifrelenmeli (hash)
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
 
-    // Kullanıcıyı kaydet
-    const count = users.get(username) || 0;
-    users.set(username, count + 1);
-
-    // A) Herkese "Bu kişi ONLINE oldu" de
-    io.emit("userStatus", { username, online: true });
-
-    // B) [YENİ] Yeni giren kişiye "Şu an içeride bunlar var" listesini gönder
-    const onlineUsersList = Array.from(users.keys());
-    socket.emit("activeUsersList", onlineUsersList);
-
-    // C) Girdiği odanın (genel) geçmiş mesajlarını yükle
-    if (roomMessages["genel"]) {
-      socket.emit("loadHistory", roomMessages["genel"]);
+      // Başarılı mesajı dön
+      socket.emit("registerResponse", { success: true, message: "Kayıt veritabanına eklendi!" });
+      
+    } catch (error) {
+      console.error("Kayıt hatası:", error);
+      socket.emit("registerResponse", { success: false, message: "Veritabanı hatası!" });
     }
   });
 
-  // 2. ODA DEĞİŞTİRME
+  /* -------------------------------------------------
+     B. GİRİŞ YAPMA (Sohbete Katılma)
+     ------------------------------------------------- */
+  socket.on("setUsername", (username) => {
+    if (!username) return;
+    currentUser = username;
+
+    // Online listesine ekle
+    onlineUsers.set(username, true);
+
+    // Herkese duyur: "Bu kişi online oldu"
+    io.emit("userStatus", { username, online: true });
+
+    // Yeni girene aktif listeyi gönder
+    socket.emit("activeUsersList", Array.from(onlineUsers.keys()));
+
+    // Odanın geçmiş mesajlarını Firebase'den yükle
+    loadMessagesForRoom(currentRoom, socket);
+  });
+
+  /* -------------------------------------------------
+     C. ODA DEĞİŞTİRME
+     ------------------------------------------------- */
   socket.on("joinRoom", (roomName) => {
     socket.leave(currentRoom);
     socket.join(roomName);
     currentRoom = roomName;
 
-    // Odanın geçmiş mesajlarını sadece bu kullanıcıya gönder
-    if (roomMessages[roomName]) {
-      socket.emit("loadHistory", roomMessages[roomName]);
-    }
+    // Yeni odanın mesajlarını veritabanından çek
+    loadMessagesForRoom(currentRoom, socket);
   });
 
-  // 3. MESAJ GÖNDERME
-  socket.on("sendMessage", (data) => {
-    if (!username) return;
-    const { text, time } = data;
+  /* -------------------------------------------------
+     D. MESAJ GÖNDERME
+     ------------------------------------------------- */
+  socket.on("sendMessage", async (data) => {
+    if (!currentUser) return;
 
-    const msg = { username, text, time };
+    const messageData = {
+      room: currentRoom,
+      username: currentUser,
+      text: data.text,
+      time: data.time,
+      createdAt: admin.firestore.FieldValue.serverTimestamp() // Sıralama için sunucu saati
+    };
 
-    // Mesajı sunucu hafızasına kaydet (Geçmiş için)
-    if (!roomMessages[currentRoom]) {
-      roomMessages[currentRoom] = [];
+    // 1. Önce Veritabanına Kaydet (Kalıcı Olsun)
+    try {
+      await db.collection("messages").add(messageData);
+    } catch (err) {
+      console.error("Mesaj kaydedilemedi:", err);
     }
-    roomMessages[currentRoom].push(msg);
 
-    // Son 50 mesajı tut, fazlasını sil
-    if (roomMessages[currentRoom].length > 50) {
-      roomMessages[currentRoom].shift();
-    }
-
-    // Mesajı o odadakilere gönder
-    io.to(currentRoom).emit("newMessage", msg);
+    // 2. Sonra Odadaki Herkese Gönder (Anlık Görünsün)
+    io.to(currentRoom).emit("newMessage", {
+      username: currentUser,
+      text: data.text,
+      time: data.time
+    });
   });
 
-  // 4. ÇIKIŞ YAPMA
+  /* -------------------------------------------------
+     E. ÇIKIŞ YAPMA
+     ------------------------------------------------- */
   socket.on("disconnect", () => {
-    if (!username) return;
-
-    const count = users.get(username) || 0;
-    if (count <= 1) {
-      users.delete(username);
-      // Herkese "Bu kişi OFFLINE oldu" de
-      io.emit("userStatus", { username, online: false });
-    } else {
-      users.set(username, count - 1);
+    if (currentUser) {
+      onlineUsers.delete(currentUser);
+      io.emit("userStatus", { username: currentUser, online: false });
     }
   });
 });
 
-const PORT = process.env.PORT || 3000;
+// YARDIMCI FONKSİYON: Mesajları Çekme
+async function loadMessagesForRoom(roomName, socket) {
+  try {
+    // Firebase sorgusu: Odaya göre filtrele, tarihe göre tersten sırala, son 50'yi al
+    const snapshot = await db.collection("messages")
+      .where("room", "==", roomName)
+      .orderBy("createdAt", "desc") 
+      .limit(50)
+      .get();
+
+    const history = [];
+    snapshot.forEach(doc => {
+      history.push(doc.data());
+    });
+
+    // Veriler tersten (en yeni en başta) geldiği için çevirip gönderiyoruz
+    socket.emit("loadHistory", history.reverse());
+    
+  } catch (error) {
+    console.error("Geçmiş yüklenirken hata:", error);
+  }
+}
+
+const PORT = 3000;
 server.listen(PORT, () => {
-  console.log(`Sunucu çalışıyor: http://localhost:${PORT}`);
+  console.log(`Sunucu ${PORT} portunda ve Firebase aktif!`);
 });
