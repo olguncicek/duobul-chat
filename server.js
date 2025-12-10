@@ -4,33 +4,42 @@ const socketIo = require("socket.io");
 const admin = require("firebase-admin");
 
 /* ===================================================
-   1. FIREBASE KURULUMU (RAILWAY & LOCAL UYUMLU)
+   1. FIREBASE KURULUMU (FIXED VERSION)
    =================================================== */
 let serviceAccount;
 
 try {
-  // Eğer Railway üzerindeysek (Environment Variable varsa)
+  // A) RAILWAY ORTAMI (Değişken Varsa)
   if (process.env.FIREBASE_KEY) {
-    console.log("--> Railway ortamı algılandı. Anahtar Variable'dan okunuyor...");
-    // Gelen veri String olduğu için JSON objesine çeviriyoruz
+    console.log("--> Railway ortamı algılandı. Değişken okunuyor...");
+    
+    // 1. JSON verisini çevir
     serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
+
+    // 2. [KRİTİK DÜZELTME] Private Key içindeki \n karakterlerini düzelt
+    // Railway bazen satır atlamaları metin olarak algılar, bunu düzeltiyoruz:
+    if (serviceAccount.private_key) {
+      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    }
+
   } 
-  // Eğer Local bilgisayardaysak (Dosya varsa)
+  // B) LOCAL ORTAM (Dosya Varsa)
   else {
-    console.log("--> Local ortam algılandı. 'firebase-key.json' okunuyor...");
+    console.log("--> Local ortam algılandı. Dosya okunuyor...");
     serviceAccount = require("./firebase-key.json");
   }
 
+  // Firebase'i başlat
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
   
-  console.log("--> Firebase bağlantısı BAŞARILI!");
+  console.log("--> Firebase bağlantısı BAŞARILI! (Yetkilendirme Tamam)");
 
 } catch (error) {
-  console.error("!!! FIREBASE HATASI !!!");
-  console.error("Sebep: Anahtar bulunamadı veya format hatalı.");
-  console.error("Detay:", error.message);
+  console.error("!!! FIREBASE BAĞLANTI HATASI !!!");
+  console.error("Hata Detayı:", error.message);
+  // Hata olsa bile sunucu çökmesin diye boş geçiyoruz ama veritabanı çalışmaz
 }
 
 const db = admin.firestore();
@@ -44,7 +53,7 @@ const io = socketIo(server, {
   cors: { origin: "*" }
 });
 
-// Statik dosyaları (HTML, CSS, JS) 'public' klasöründen sun
+// Statik dosyaları sun
 app.use(express.static(__dirname + "/public"));
 
 app.get("/", (req, res) => {
@@ -52,71 +61,55 @@ app.get("/", (req, res) => {
 });
 
 /* ===================================================
-   3. SOCKET.IO İŞLEMLERİ (RAM + VERİTABANI)
+   3. SOCKET.IO İŞLEMLERİ
    =================================================== */
-// Anlık kimlerin online olduğunu RAM'de tutuyoruz (Hızlı olsun diye)
 const onlineUsers = new Map(); 
 
 io.on("connection", (socket) => {
-  console.log("Yeni bağlantı: " + socket.id);
+  // console.log("Bağlantı: " + socket.id); // Log kirliliği yapmasın
 
   let currentUser = null;
   let currentRoom = "genel"; 
   socket.join("genel");
 
-  // --- A. KULLANICI KAYDI (REGISTER) ---
+  // --- KAYIT OLMA ---
   socket.on("registerUser", async (userData) => {
+    console.log("Kayıt isteği geldi:", userData.email);
     try {
-      // Veritabanına ekle
       await db.collection("users").add({
-        name: userData.name,
-        surname: userData.surname,
-        year: userData.year,
-        email: userData.email,
-        password: userData.password, // İleride şifrelemeyi unutma
+        ...userData,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
-
       socket.emit("registerResponse", { success: true, message: "Kayıt Başarılı!" });
     } catch (error) {
-      console.error("Kayıt hatası:", error);
-      socket.emit("registerResponse", { success: false, message: "Veritabanı hatası oluştu." });
+      console.error("Firebase Yazma Hatası:", error);
+      socket.emit("registerResponse", { success: false, message: "Sunucu Hatası: " + error.message });
     }
   });
 
-  // --- B. GİRİŞ YAPMA (LOGIN) ---
+  // --- GİRİŞ YAPMA ---
   socket.on("setUsername", (username) => {
     if (!username) return;
     currentUser = username;
-
-    // Online listesine ekle
     onlineUsers.set(username, true);
-
-    // Herkese duyur
     io.emit("userStatus", { username, online: true });
-
-    // Yeni girene aktif kullanıcıları gönder
     socket.emit("activeUsersList", Array.from(onlineUsers.keys()));
-
-    // Odanın geçmiş mesajlarını yükle
     loadMessagesForRoom(currentRoom, socket);
   });
 
-  // --- C. ODA DEĞİŞTİRME ---
+  // --- ODA DEĞİŞTİRME ---
   socket.on("joinRoom", (roomName) => {
     socket.leave(currentRoom);
     socket.join(roomName);
     currentRoom = roomName;
-
-    // Yeni odanın mesajlarını yükle
     loadMessagesForRoom(currentRoom, socket);
   });
 
-  // --- D. MESAJ GÖNDERME ---
+  // --- MESAJ GÖNDERME ---
   socket.on("sendMessage", async (data) => {
     if (!currentUser) return;
-
-    // 1. Veritabanına Kaydet
+    
+    // Veritabanına
     try {
       await db.collection("messages").add({
         room: currentRoom,
@@ -125,11 +118,9 @@ io.on("connection", (socket) => {
         time: data.time,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
-    } catch (err) {
-      console.error("Mesaj kaydetme hatası:", err);
-    }
+    } catch (e) { console.error("Mesaj hatası:", e); }
 
-    // 2. Canlı Olarak Gönder
+    // Ekrana
     io.to(currentRoom).emit("newMessage", {
       username: currentUser,
       text: data.text,
@@ -137,7 +128,6 @@ io.on("connection", (socket) => {
     });
   });
 
-  // --- E. ÇIKIŞ YAPMA ---
   socket.on("disconnect", () => {
     if (currentUser) {
       onlineUsers.delete(currentUser);
@@ -146,7 +136,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// YARDIMCI FONKSİYON: Geçmiş Mesajları Çek
 async function loadMessagesForRoom(roomName, socket) {
   try {
     const snapshot = await db.collection("messages")
@@ -154,25 +143,15 @@ async function loadMessagesForRoom(roomName, socket) {
       .orderBy("createdAt", "desc")
       .limit(50)
       .get();
-
     const history = [];
-    snapshot.forEach(doc => {
-      history.push(doc.data());
-    });
-
-    // Tersten geldiği için düzeltip gönder
+    snapshot.forEach(doc => history.push(doc.data()));
     socket.emit("loadHistory", history.reverse());
   } catch (error) {
-    console.error("Geçmiş yüklenirken hata:", error);
+    console.error("Geçmiş çekilemedi:", error.message);
   }
 }
 
-/* ===================================================
-   4. SUNUCUYU BAŞLAT
-   =================================================== */
-// Railway'in atadığı portu kullan, yoksa 3000
 const PORT = process.env.PORT || 3000;
-
 server.listen(PORT, () => {
-  console.log(`Sunucu ${PORT} portunda çalışıyor...`);
+  console.log(`Sunucu ${PORT} portunda aktif.`);
 });
