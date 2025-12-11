@@ -4,80 +4,47 @@ const socketIo = require("socket.io");
 const admin = require("firebase-admin");
 
 /* ===================================================
-   1. FIREBASE BAĞLANTISI (DEBUG MODU)
+   1. FIREBASE BAĞLANTISI (BASİT & NET MOD)
    =================================================== */
-let serviceAccount;
-let isFirebaseReady = false; // Bağlantı durumunu takip edelim
+let db;
+let isFirebaseReady = false;
 
-console.log("\n>>> SUNUCU BAŞLATILIYOR...");
-console.log(">>> Firebase bağlantı kontrolü yapılıyor...");
+console.log("--------------------------------------------");
+console.log("--- FIREBASE BAĞLANTI KONTROLÜ BAŞLIYOR ---");
+console.log("--------------------------------------------");
 
 try {
-  // A) RAILWAY ORTAMI KONTROLÜ
-  // Önce değişkenin var olup olmadığına bakalım
-  if (process.env.FIREBASE_PRIVATE_KEY) {
-    console.log("--> Railway Ortam Değişkeni BULUNDU.");
-    
-    // Değişkenin içeriğini kontrol edelim (Güvenlik için sadece uzunluğunu yazıyoruz)
-    const pk = process.env.FIREBASE_PRIVATE_KEY;
-    console.log(`--> Private Key Uzunluğu: ${pk.length} karakter.`);
-    
-    if (!pk.includes("BEGIN PRIVATE KEY")) {
-      throw new Error("HATA: Private Key 'BEGIN PRIVATE KEY' ile başlamıyor! Kopyalarken hata yapılmış.");
-    }
+  // 1. Değişkenleri Kontrol Et
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-    // \n Karakterlerini düzeltelim
-    const privateKeyFixed = pk.replace(/\\n/g, '\n');
+  if (!projectId) throw new Error("EKSİK DEĞİŞKEN: FIREBASE_PROJECT_ID bulunamadı!");
+  if (!clientEmail) throw new Error("EKSİK DEĞİŞKEN: FIREBASE_CLIENT_EMAIL bulunamadı!");
+  if (!privateKey) throw new Error("EKSİK DEĞİŞKEN: FIREBASE_PRIVATE_KEY bulunamadı!");
 
-    serviceAccount = {
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: privateKeyFixed
-    };
+  console.log("--> Tüm değişkenler mevcut. Anahtar formatlanıyor...");
 
-    // Diğer değişkenler eksik mi?
-    if (!serviceAccount.projectId) throw new Error("HATA: FIREBASE_PROJECT_ID değişkeni eksik!");
-    if (!serviceAccount.clientEmail) throw new Error("HATA: FIREBASE_CLIENT_EMAIL değişkeni eksik!");
+  // 2. Private Key Formatını Düzelt (Satır başlarını ayarla)
+  const formattedKey = privateKey.replace(/\\n/g, '\n');
 
-    console.log("--> Değişkenler doğrulandı, Firebase başlatılıyor...");
-    
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-    
-    isFirebaseReady = true;
-    console.log("--> ✅ RAILWAY ÜZERİNDE FIREBASE BAŞARIYLA BAŞLATILDI!");
-  } 
-  
-  // B) LOCAL ORTAM KONTROLÜ
-  else {
-    console.log("--> Railway değişkeni yok. Yerel dosya aranıyor...");
-    try {
-      serviceAccount = require("./firebase-key.json");
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-      });
-      isFirebaseReady = true;
-      console.log("--> ✅ YEREL DOSYA İLE FIREBASE BAŞLATILDI!");
-    } catch (err) {
-      console.log("--> ❌ Yerel dosya da bulunamadı.");
-    }
-  }
+  // 3. Bağlantıyı Başlat
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: projectId,
+      clientEmail: clientEmail,
+      privateKey: formattedKey
+    })
+  });
+
+  db = admin.firestore();
+  isFirebaseReady = true;
+  console.log("--> ✅ BAŞARILI: Firebase Veritabanına Bağlanıldı!");
 
 } catch (error) {
-  console.error("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-  console.error("!!! FIREBASE KURULUM HATASI !!!");
-  console.error("HATA MESAJI:", error.message);
-  console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-}
-
-// EĞER FIREBASE BAŞLAMADIYSA, db OLUŞTURMA!
-let db;
-if (isFirebaseReady) {
-  db = admin.firestore();
-} else {
-  console.error("!!! DİKKAT: Firebase başlatılamadığı için Veritabanı devre dışı !!!");
-  // Hata almamak için db'yi boş geçiyoruz ama kayıt çalışmaz
+  console.error("\n!!! KRİTİK HATA: FIREBASE BAĞLANAMADI !!!");
+  console.error("SEBEP:", error.message);
+  console.error("--------------------------------------------\n");
 }
 
 /* ===================================================
@@ -105,8 +72,13 @@ io.on("connection", (socket) => {
 
   // --- KAYIT OLMA ---
   socket.on("registerUser", async (userData) => {
+    // Veritabanı bağlantısı yoksa kullanıcıyı uyar
     if (!isFirebaseReady) {
-      socket.emit("registerResponse", { success: false, message: "Sunucu Hatası: Veritabanı bağlantısı yok!" });
+      console.error("Kayıt denemesi başarısız: Veritabanı yok.");
+      socket.emit("registerResponse", { 
+        success: false, 
+        message: "Sunucu Hatası: Veritabanı bağlantısı kurulamadı. Lütfen yöneticiyle iletişime geçin." 
+      });
       return;
     }
 
@@ -141,7 +113,8 @@ io.on("connection", (socket) => {
 
   socket.on("sendMessage", async (data) => {
     if (!currentUser) return;
-    // Veritabanı varsa kaydet, yoksa sadece gönder
+    
+    // Sadece bağlantı varsa kaydet
     if (isFirebaseReady) {
       try {
         await db.collection("messages").add({
@@ -170,7 +143,7 @@ io.on("connection", (socket) => {
 });
 
 async function loadMessagesForRoom(roomName, socket) {
-  if (!isFirebaseReady) return; // DB yoksa geçmiş yok
+  if (!isFirebaseReady) return;
   try {
     const snapshot = await db.collection("messages")
       .where("room", "==", roomName)
