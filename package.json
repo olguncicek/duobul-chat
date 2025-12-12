@@ -1,6 +1,7 @@
 {
   "name": "duobul-sohbet",
   "version": "1.0.0",
+  "description": "Oyuncu Arkadas Bulma Uygulamasi",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
