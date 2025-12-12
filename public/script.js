@@ -2,14 +2,9 @@ const socket = io();
 
 // HTML Elementleri
 const loginModal = document.getElementById("loginModal");
-const registerModal = document.getElementById("registerModal");
-const chatContainer = document.getElementById("chatContainer");
-
 const usernameInput = document.getElementById("usernameInput");
 const loginBtn = document.getElementById("loginBtn");
-const registerBtn = document.getElementById("registerBtn");
-const backToLoginBtn = document.getElementById("backToLoginBtn");
-const doRegisterBtn = document.getElementById("doRegisterBtn");
+const chatContainer = document.getElementById("chatContainer");
 
 const msgInput = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
@@ -17,122 +12,156 @@ const messagesUl = document.querySelector(".messages");
 const lobbyBtns = document.querySelectorAll(".lobby-btn");
 
 let myUsername = "";
-let currentRoom = "genel";
-const userStatusMap = {};
+let currentRoom = "genel"; 
+const userStatusMap = {}; // Kim online, kim offline haritası
 
-/* ---------- 1. GİRİŞ VE MODAL GEÇİŞLERİ ---------- */
+/* ---------- 1. GİRİŞ İŞLEMLERİ ---------- */
 function doLogin() {
   const name = usernameInput.value.trim();
-  if (!name) return alert("Lütfen kullanıcı adınızı girin!");
+  if (!name) return;
   myUsername = name;
+  
   socket.emit("setUsername", myUsername);
+
   loginModal.classList.add("hidden");
   chatContainer.classList.remove("blur");
   msgInput.focus();
 }
 
 loginBtn.addEventListener("click", doLogin);
-usernameInput.addEventListener("keypress", (e) => { if (e.key === "Enter") doLogin(); });
-
-// Kayıt ekranını aç
-registerBtn.addEventListener("click", () => {
-  loginModal.classList.add("hidden");
-  registerModal.classList.remove("hidden");
+usernameInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") doLogin();
 });
 
-// Giriş ekranına dön
-backToLoginBtn.addEventListener("click", () => {
-  registerModal.classList.add("hidden");
-  loginModal.classList.remove("hidden");
-});
-
-/* ---------- 2. KAYIT İŞLEMİ VE KONTROLLER ---------- */
-doRegisterBtn.addEventListener("click", () => {
-  const email = document.getElementById("regEmail").value.trim();
-  const uName = document.getElementById("regUsername").value.trim();
-  const pass = document.getElementById("regPass").value.trim();
-  const name = document.getElementById("regName").value.trim();
-
-  // Boş alan kontrolü
-  if (!email || !uName || !pass || !name) {
-    return alert("Lütfen tüm alanları doldurun!");
-  }
-
-  // E-posta Regex kontrolü
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(email)) {
-    return alert("Lütfen geçerli bir e-posta adresi girin!");
-  }
-
-  // RAM Modunda çalıştığımız için doğrudan başarı mesajı veriyoruz
-  alert("Kayıt Başarılı! Şimdi giriş yapabilirsiniz.");
-  registerModal.classList.add("hidden");
-  loginModal.classList.remove("hidden");
-});
-
-/* ---------- 3. ODA VE MESAJ İŞLEMLERİ ---------- */
+/* ---------- 2. ODA DEĞİŞTİRME ---------- */
 lobbyBtns.forEach((btn) => {
   btn.addEventListener("click", () => {
     const roomName = btn.dataset.room;
     if (roomName === currentRoom) return;
+
+    // Aktif butonu değiştir
     document.querySelector(".lobby-btn.active").classList.remove("active");
     btn.classList.add("active");
+
+    // Ekranı temizle
     messagesUl.innerHTML = "";
+    
+    // Sunucuya odaya girdiğimizi bildir
     socket.emit("joinRoom", roomName);
     currentRoom = roomName;
   });
 });
 
+/* ---------- 3. MESAJ GÖNDERME ---------- */
 function sendMessage() {
   const text = msgInput.value.trim();
   if (!text) return;
+
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // Sunucuya gönder
   socket.emit("sendMessage", { text, time });
   msgInput.value = "";
+  msgInput.focus();
 }
 
 sendBtn.addEventListener("click", sendMessage);
-msgInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+msgInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") sendMessage();
+});
 
 /* ---------- 4. SOCKET OLAYLARI ---------- */
-socket.on("newMessage", (msg) => { addMessageToUI(msg.username, msg.text, msg.time); });
 
+// Yeni mesaj geldiğinde
+socket.on("newMessage", (msg) => {
+  addMessageToUI(msg.username, msg.text, msg.time);
+});
+
+// Geçmiş mesajlar yüklendiğinde (Oda değiştirince)
 socket.on("loadHistory", (messages) => {
   messagesUl.innerHTML = "";
-  messages.forEach((m) => addMessageToUI(m.username, m.text, m.time));
+  messages.forEach((m) => {
+    addMessageToUI(m.username, m.text, m.time);
+  });
 });
 
+// Bir kullanıcının durumu değiştiğinde (Online/Offline)
 socket.on("userStatus", (data) => {
-  userStatusMap[data.username] = data.online ? "online" : "offline";
+  const { username, online } = data;
+  userStatusMap[username] = online ? "online" : "offline";
   updateAllUserStatuses();
 });
 
+// Sunucudan aktif kullanıcı listesi geldiğinde
 socket.on("activeUsersList", (list) => {
-  list.forEach(u => { userStatusMap[u] = "online"; });
+  list.forEach(u => {
+    userStatusMap[u] = "online";
+  });
   updateAllUserStatuses();
 });
 
-function addMessageToUI(username, text, time) {
-  const li = document.createElement("li");
-  li.className = "message";
-  li.dataset.username = username;
-  li.innerHTML = `
-    <div class="message-header">
-      <span class="status-dot ${userStatusMap[username] === 'online' ? '' : 'offline'}"></span>
-      <span class="sender">${username}</span>
-      <span class="date">${time}</span>
-    </div>
-    <p class="text">${text}</p>
-  `;
-  messagesUl.appendChild(li);
+function scrollToBottom() {
   messagesUl.scrollTop = messagesUl.scrollHeight;
 }
 
+// Arayüze mesaj ekleme
+function addMessageToUI(username, text, time) {
+  const li = document.createElement("li");
+  li.classList.add("message");
+  
+  // WHATSAPP STİLİ HİZALAMA: Mesaj bizden mi başkasından mı?
+  if (username === myUsername) {
+    li.classList.add("mine");    // Sağ taraf
+  } else {
+    li.classList.add("others");  // Sol taraf
+  }
+
+  li.dataset.username = username;
+
+  const header = document.createElement("div");
+  header.classList.add("message-header");
+
+  const dot = document.createElement("span");
+  dot.classList.add("status-dot");
+  
+  if (userStatusMap[username] !== "online") {
+    dot.classList.add("offline");
+  }
+
+  const sender = document.createElement("span");
+  sender.classList.add("sender");
+  sender.textContent = username;
+
+  const date = document.createElement("span");
+  date.classList.add("date");
+  date.textContent = time;
+
+  header.appendChild(dot);
+  header.appendChild(sender);
+  header.appendChild(date);
+
+  const textP = document.createElement("p");
+  textP.classList.add("text");
+  textP.textContent = text;
+
+  li.appendChild(header);
+  li.appendChild(textP);
+
+  messagesUl.appendChild(li);
+  scrollToBottom();
+}
+
+// Durum ışıklarını güncelle
 function updateAllUserStatuses() {
-  document.querySelectorAll("li.message").forEach(li => {
-    const dot = li.querySelector(".status-dot");
+  const allMessages = document.querySelectorAll("li.message");
+  allMessages.forEach(li => {
     const uName = li.dataset.username;
-    if (userStatusMap[uName] === "online") dot.classList.remove("offline");
-    else dot.classList.add("offline");
+    const dot = li.querySelector(".status-dot");
+    
+    if (userStatusMap[uName] === "online") {
+      dot.classList.remove("offline");
+    } else {
+      dot.classList.add("offline");
+    }
   });
 }
