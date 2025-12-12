@@ -30,7 +30,7 @@ body {
   position: fixed;
   inset: 0;
   background: url("image/i.jpg") no-repeat center center;
-  background-size: cover; /* Resmi ekrana tam sığdırır */
+  background-size: cover;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -190,7 +190,7 @@ h2 {
   box-shadow: 0 0 10px #22e56f;
 }
 
-/* Mesajlar Listesi (Flexbox Güncellemesi) */
+/* Mesajlar Listesi */
 ul.messages {
   list-style: none;
   flex: 1;
@@ -269,22 +269,25 @@ ul.messages {
   box-shadow: 0 0 5px #22e56f;
 }
 
+/* ÇEVRİMDIŞI RENGİ: Girden Kırmızıya Çevrildi */
 .status-dot.offline {
-  background-color: #555;
+  background-color: #ff4655; 
   box-shadow: none;
 }
 
-/* Giriş Alanı */
+/* Mesaj Yazma Kutusu: Beyazdan Koyu Temaya Çevrildi */
 .input {
   display: flex;
 }
 
 .input input {
   flex: 1;
-  padding: 10px;
-  border: none;
+  padding: 12px;
+  border: 1px solid #232936;
   border-radius: 5px 0 0 5px;
   outline: none;
+  background: #1b212c; /* Koyu arka plan */
+  color: #fff;          /* Beyaz yazı */
 }
 
 .input button {
@@ -347,9 +350,4 @@ ul.messages::-webkit-scrollbar-thumb,
 .lobbies::-webkit-scrollbar-thumb {
   background: #333;
   border-radius: 10px;
-}
-
-ul.messages::-webkit-scrollbar-track,
-.lobbies::-webkit-scrollbar-track {
-  background: transparent;
 }
