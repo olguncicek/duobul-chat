@@ -13,7 +13,7 @@ const lobbyBtns = document.querySelectorAll(".lobby-btn");
 
 let myUsername = "";
 let currentRoom = "genel"; 
-const userStatusMap = {}; // Kim online, kim offline haritası
+const userStatusMap = {}; 
 
 /* ---------- 1. GİRİŞ İŞLEMLERİ ---------- */
 function doLogin() {
@@ -39,14 +39,11 @@ lobbyBtns.forEach((btn) => {
     const roomName = btn.dataset.room;
     if (roomName === currentRoom) return;
 
-    // Aktif butonu değiştir
     document.querySelector(".lobby-btn.active").classList.remove("active");
     btn.classList.add("active");
 
-    // Ekranı temizle
     messagesUl.innerHTML = "";
     
-    // Sunucuya odaya girdiğimizi bildir
     socket.emit("joinRoom", roomName);
     currentRoom = roomName;
   });
@@ -59,7 +56,6 @@ function sendMessage() {
 
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // Sunucuya gönder
   socket.emit("sendMessage", { text, time });
   msgInput.value = "";
   msgInput.focus();
@@ -71,13 +67,10 @@ msgInput.addEventListener("keypress", (e) => {
 });
 
 /* ---------- 4. SOCKET OLAYLARI ---------- */
-
-// Yeni mesaj geldiğinde
 socket.on("newMessage", (msg) => {
   addMessageToUI(msg.username, msg.text, msg.time);
 });
 
-// Geçmiş mesajlar yüklendiğinde (Oda değiştirince)
 socket.on("loadHistory", (messages) => {
   messagesUl.innerHTML = "";
   messages.forEach((m) => {
@@ -85,14 +78,12 @@ socket.on("loadHistory", (messages) => {
   });
 });
 
-// Bir kullanıcının durumu değiştiğinde (Online/Offline)
 socket.on("userStatus", (data) => {
   const { username, online } = data;
   userStatusMap[username] = online ? "online" : "offline";
   updateAllUserStatuses();
 });
 
-// Sunucudan aktif kullanıcı listesi geldiğinde
 socket.on("activeUsersList", (list) => {
   list.forEach(u => {
     userStatusMap[u] = "online";
@@ -104,12 +95,11 @@ function scrollToBottom() {
   messagesUl.scrollTop = messagesUl.scrollHeight;
 }
 
-// Arayüze mesaj ekleme
 function addMessageToUI(username, text, time) {
   const li = document.createElement("li");
   li.classList.add("message");
   
-  // WHATSAPP STİLİ HİZALAMA: Mesaj bizden mi başkasından mı?
+  // WHATSAPP STİLİ HİZALAMA
   if (username === myUsername) {
     li.classList.add("mine");    // Sağ taraf
   } else {
@@ -151,7 +141,6 @@ function addMessageToUI(username, text, time) {
   scrollToBottom();
 }
 
-// Durum ışıklarını güncelle
 function updateAllUserStatuses() {
   const allMessages = document.querySelectorAll("li.message");
   allMessages.forEach(li => {
