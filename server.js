@@ -1,59 +1,12 @@
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
-const admin = require("firebase-admin");
 
-/* ===================================================
-   1. FIREBASE BAĞLANTISI (BASİT & NET MOD)
-   =================================================== */
-let db;
-let isFirebaseReady = false;
-
-console.log("--------------------------------------------");
-console.log("--- FIREBASE BAĞLANTI KONTROLÜ BAŞLIYOR ---");
-console.log("--------------------------------------------");
-
-try {
-  // 1. Değişkenleri Kontrol Et
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-
-  if (!projectId) throw new Error("EKSİK DEĞİŞKEN: FIREBASE_PROJECT_ID bulunamadı!");
-  if (!clientEmail) throw new Error("EKSİK DEĞİŞKEN: FIREBASE_CLIENT_EMAIL bulunamadı!");
-  if (!privateKey) throw new Error("EKSİK DEĞİŞKEN: FIREBASE_PRIVATE_KEY bulunamadı!");
-
-  console.log("--> Tüm değişkenler mevcut. Anahtar formatlanıyor...");
-
-  // 2. Private Key Formatını Düzelt (Satır başlarını ayarla)
-  const formattedKey = privateKey.replace(/\\n/g, '\n');
-
-  // 3. Bağlantıyı Başlat
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: projectId,
-      clientEmail: clientEmail,
-      privateKey: formattedKey
-    })
-  });
-
-  db = admin.firestore();
-  isFirebaseReady = true;
-  console.log("--> ✅ BAŞARILI: Firebase Veritabanına Bağlanıldı!");
-
-} catch (error) {
-  console.error("\n!!! KRİTİK HATA: FIREBASE BAĞLANAMADI !!!");
-  console.error("SEBEP:", error.message);
-  console.error("--------------------------------------------\n");
-}
-
-/* ===================================================
-   2. SUNUCU AYARLARI
-   =================================================== */
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: "*" } });
 
+// Statik dosyaları sun
 app.use(express.static(__dirname + "/public"));
 
 app.get("/", (req, res) => {
@@ -61,36 +14,26 @@ app.get("/", (req, res) => {
 });
 
 /* ===================================================
-   3. SOCKET.IO İŞLEMLERİ
+   HAFIZA (RAM) ÜZERİNDE VERİ SAKLAMA
    =================================================== */
-const onlineUsers = new Map(); 
+const onlineUsers = new Map(); // Kimler online?
+const roomMessages = {};       // Oda geçmişleri (Son 50 mesaj)
+const registeredUsers = [];    // Kayıt olan sahte kullanıcı listesi
 
 io.on("connection", (socket) => {
   let currentUser = null;
   let currentRoom = "genel"; 
   socket.join("genel");
 
-  // --- KAYIT OLMA ---
-  socket.on("registerUser", async (userData) => {
-    // Veritabanı bağlantısı yoksa kullanıcıyı uyar
-    if (!isFirebaseReady) {
-      console.error("Kayıt denemesi başarısız: Veritabanı yok.");
-      socket.emit("registerResponse", { 
-        success: false, 
-        message: "Sunucu Hatası: Veritabanı bağlantısı kurulamadı. Lütfen yöneticiyle iletişime geçin." 
-      });
-      return;
-    }
-
-    try {
-      await db.collection("users").add({
-        ...userData,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+  // --- KAYIT OLMA (RAM'e Kaydeder) ---
+  socket.on("registerUser", (userData) => {
+    // Aynı maille kayıt var mı kontrolü
+    const exists = registeredUsers.find(u => u.email === userData.email);
+    if (exists) {
+      socket.emit("registerResponse", { success: false, message: "Bu e-posta zaten kayıtlı!" });
+    } else {
+      registeredUsers.push(userData);
       socket.emit("registerResponse", { success: true, message: "Kayıt Başarılı!" });
-    } catch (error) {
-      console.error("Kayıt Hatası:", error);
-      socket.emit("registerResponse", { success: false, message: "Hata: " + error.message });
     }
   });
 
@@ -99,41 +42,52 @@ io.on("connection", (socket) => {
     if (!username) return;
     currentUser = username;
     onlineUsers.set(username, true);
+
     io.emit("userStatus", { username, online: true });
     socket.emit("activeUsersList", Array.from(onlineUsers.keys()));
-    loadMessagesForRoom(currentRoom, socket);
+
+    // Geçmiş mesajları gönder
+    if (roomMessages[currentRoom]) {
+      socket.emit("loadHistory", roomMessages[currentRoom]);
+    }
   });
 
+  // --- ODA DEĞİŞTİRME ---
   socket.on("joinRoom", (roomName) => {
     socket.leave(currentRoom);
     socket.join(roomName);
     currentRoom = roomName;
-    loadMessagesForRoom(currentRoom, socket);
+
+    // Yeni odanın geçmişini gönder
+    if (roomMessages[roomName]) {
+      socket.emit("loadHistory", roomMessages[roomName]);
+    } else {
+      socket.emit("loadHistory", []);
+    }
   });
 
-  socket.on("sendMessage", async (data) => {
+  // --- MESAJ GÖNDERME ---
+  socket.on("sendMessage", (data) => {
     if (!currentUser) return;
-    
-    // Sadece bağlantı varsa kaydet
-    if (isFirebaseReady) {
-      try {
-        await db.collection("messages").add({
-          room: currentRoom,
-          username: currentUser,
-          text: data.text,
-          time: data.time,
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-      } catch (e) { console.error("Mesaj Hatası:", e); }
-    }
 
-    io.to(currentRoom).emit("newMessage", {
+    const msg = {
       username: currentUser,
       text: data.text,
       time: data.time
-    });
+    };
+
+    // Hafızaya kaydet
+    if (!roomMessages[currentRoom]) roomMessages[currentRoom] = [];
+    roomMessages[currentRoom].push(msg);
+
+    // Sadece son 50 mesajı tut
+    if (roomMessages[currentRoom].length > 50) roomMessages[currentRoom].shift();
+
+    // Odadakilere gönder
+    io.to(currentRoom).emit("newMessage", msg);
   });
 
+  // --- ÇIKIŞ ---
   socket.on("disconnect", () => {
     if (currentUser) {
       onlineUsers.delete(currentUser);
@@ -142,23 +96,7 @@ io.on("connection", (socket) => {
   });
 });
 
-async function loadMessagesForRoom(roomName, socket) {
-  if (!isFirebaseReady) return;
-  try {
-    const snapshot = await db.collection("messages")
-      .where("room", "==", roomName)
-      .orderBy("createdAt", "desc")
-      .limit(50)
-      .get();
-    const history = [];
-    snapshot.forEach(doc => history.push(doc.data()));
-    socket.emit("loadHistory", history.reverse());
-  } catch (error) {
-    console.error("Geçmiş yüklenemedi:", error.message);
-  }
-}
-
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Sunucu ${PORT} portunda aktif!`);
+  console.log(`Sunucu ${PORT} portunda (VERİTABANSIZ) çalışıyor...`);
 });
