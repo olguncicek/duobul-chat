@@ -13,7 +13,7 @@ const lobbyBtns = document.querySelectorAll(".lobby-btn");
 
 let myUsername = "";
 let currentRoom = "genel"; 
-const userStatusMap = {}; 
+const userStatusMap = {}; // Kim online, kim offline haritası
 
 /* ---------- 1. GİRİŞ İŞLEMLERİ ---------- */
 function doLogin() {
@@ -39,22 +39,29 @@ lobbyBtns.forEach((btn) => {
     const roomName = btn.dataset.room;
     if (roomName === currentRoom) return;
 
+    // Aktif butonu değiştir
     document.querySelector(".lobby-btn.active").classList.remove("active");
     btn.classList.add("active");
 
+    // Ekranı temizle
     messagesUl.innerHTML = "";
-    
-    socket.emit("joinRoom", roomName);
+
+    // Odaya geç
     currentRoom = roomName;
+    socket.emit("joinRoom", currentRoom);
   });
 });
 
 /* ---------- 3. MESAJ GÖNDERME ---------- */
 function sendMessage() {
   const text = msgInput.value.trim();
-  if (!text) return;
+  if (!text || !myUsername) return;
 
-  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const time = new Date().toLocaleTimeString("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  });
 
   socket.emit("sendMessage", { text, time });
   msgInput.value = "";
@@ -66,54 +73,58 @@ msgInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendMessage();
 });
 
-/* ---------- 4. SOCKET OLAYLARI ---------- */
+/* ---------- 4. SUNUCUDAN GELENLER ---------- */
+
+// Yeni Mesaj Geldiğinde
 socket.on("newMessage", (msg) => {
-  addMessageToUI(msg.username, msg.text, msg.time);
+  addMessage(msg.username, msg.text, msg.time);
 });
 
+// Eski Mesajlar Yüklendiğinde
 socket.on("loadHistory", (messages) => {
   messagesUl.innerHTML = "";
-  messages.forEach((m) => {
-    addMessageToUI(m.username, m.text, m.time);
+  messages.forEach((msg) => {
+    addMessage(msg.username, msg.text, msg.time);
   });
+  scrollToBottom();
 });
 
-socket.on("userStatus", (data) => {
-  const { username, online } = data;
+// Birisi Durum Değiştirdiğinde (Girdi/Çıktı)
+socket.on("userStatus", ({ username, online }) => {
   userStatusMap[username] = online ? "online" : "offline";
-  updateAllUserStatuses();
+  updateAllUserStatuses(); // Ekrandaki renkleri güncelle
 });
 
-socket.on("activeUsersList", (list) => {
-  list.forEach(u => {
+// [YENİ] Siteye İlk Girince Aktif Kullanıcı Listesini Al
+socket.on("activeUsersList", (usersArray) => {
+  // Gelen listedeki herkesi "online" olarak işaretle
+  usersArray.forEach(u => {
     userStatusMap[u] = "online";
   });
+  // Ekrandaki tüm ışıkları buna göre düzelt
   updateAllUserStatuses();
 });
 
-function scrollToBottom() {
-  messagesUl.scrollTop = messagesUl.scrollHeight;
-}
+/* ---------- YARDIMCI FONKSİYONLAR ---------- */
 
-function addMessageToUI(username, text, time) {
+function addMessage(username, text, time) {
   const li = document.createElement("li");
   li.classList.add("message");
   
-  // WHATSAPP STİLİ HİZALAMA
   if (username === myUsername) {
-    li.classList.add("mine");    // Sağ taraf
-  } else {
-    li.classList.add("others");  // Sol taraf
+    li.classList.add("mine");
   }
-
+  // Bu satır önemli: Mesajın kime ait olduğunu etikete yazıyoruz
   li.dataset.username = username;
 
   const header = document.createElement("div");
   header.classList.add("message-header");
 
+  // Durum Noktası (Dot)
   const dot = document.createElement("span");
   dot.classList.add("status-dot");
   
+  // Eğer listemizde "online" değilse, varsayılan olarak kırmızı (offline) yap
   if (userStatusMap[username] !== "online") {
     dot.classList.add("offline");
   }
@@ -141,6 +152,7 @@ function addMessageToUI(username, text, time) {
   scrollToBottom();
 }
 
+// Ekrandaki tüm mesajların ışıklarını günceller
 function updateAllUserStatuses() {
   const allMessages = document.querySelectorAll("li.message");
   allMessages.forEach(li => {
@@ -148,9 +160,13 @@ function updateAllUserStatuses() {
     const dot = li.querySelector(".status-dot");
     
     if (userStatusMap[uName] === "online") {
-      dot.classList.remove("offline");
+      dot.classList.remove("offline"); // Yeşil
     } else {
-      dot.classList.add("offline");
+      dot.classList.add("offline"); // Kırmızı
     }
   });
+}
+
+function scrollToBottom() {
+  messagesUl.scrollTop = messagesUl.scrollHeight;
 }
