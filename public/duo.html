@@ -5,9 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DuoBul Sohbet</title>
     <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
   </head>
   <body>
+    <!-- Giriş ekranı -->
     <div id="loginModal" class="login-modal">
       <div class="login-card">
         <div class="logo-area">
@@ -18,47 +22,42 @@
           </div>
         </div>
         <p class="login-tagline">Anında Bağlan, Hemen Oyna.</p>
+
         <div class="login-input-group">
-          <input class="input-border" type="text" id="usernameInput" placeholder="Kullanıcı Adı Gir..." />
+          <input
+            class="input-border"
+            type="text"
+            id="usernameInput"
+            placeholder="Kullanıcı Adı Gir..."
+          />
         </div>
         <button id="loginBtn" class="login-button">Giriş Yap ➤</button>
         <button id="registerBtn" class="register-button">Kayıt Ol</button>
       </div>
     </div>
 
-    <div id="registerModal" class="login-modal hidden">
-      <div class="login-card" style="max-height: 90vh; overflow-y: auto;">
-        <div class="logo-area">
-          <div class="logo-circle"></div>
-          <div class="logo-texts">
-            <div class="logo-title">DuoBul</div>
-            <div class="logo-subtitle">YENİ HESAP OLUŞTUR</div>
-          </div>
-        </div>
-        <div class="register-form">
-          <div class="login-input-group"><input type="text" id="regName" placeholder="Ad" /></div>
-          <div class="login-input-group"><input type="text" id="regSurname" placeholder="Soyad" /></div>
-          <div class="login-input-group"><input type="number" id="regYear" placeholder="Doğum Yılı" /></div>
-          <div class="login-input-group"><input type="email" id="regEmail" placeholder="E-posta" /></div>
-          <div class="login-input-group"><input type="text" id="regUsername" placeholder="Kullanıcı Adı" /></div>
-          <div class="login-input-group"><input type="password" id="regPass" placeholder="Şifre" /></div>
-          
-          <button id="doRegisterBtn" class="login-button">Kaydı Tamamla ➤</button>
-          <button id="backToLoginBtn" class="register-button" style="border:none; color:#6c7484;">Giriş Ekranına Dön</button>
-        </div>
-      </div>
-    </div>
-
+    <!-- Sohbet kutusu -->
     <div class="chat-container blur" id="chatContainer">
       <h2>Sohbet</h2>
       <div class="lobbies">
         <button class="lobby-btn active" data-room="genel">Genel</button>
-        <button class="lobby-btn game-val" data-room="val"><img src="/icon/valo.png" class="val" />Valorant</button>
-        <button class="lobby-btn game-lol" data-room="lol"><img src="/icon/lol.png" class="val" />LoL</button>
-        <button class="lobby-btn game-cs" data-room="cs"><img src="/icon/cs22.png" class="val" />CS 2</button>
-        <button class="lobby-btn game-fc" data-room="fc"><img src="/icon/fc26.png" class="val" />FC 26</button>
-        <button class="lobby-btn game-arc" data-room="arc"><img src="/icon/arc.png" class="val" />ARC Raiders</button>
+        <button class="lobby-btn game-val" data-room="val">
+          <img src="/icon/valo.png" class="val" />Valorant
+        </button>
+        <button class="lobby-btn game-lol" data-room="lol">
+          <img src="/icon/lol.png" class="val" />LoL
+        </button>
+        <button class="lobby-btn game-cs" data-room="cs">
+          <img src="/icon/cs22.png" class="val" />CS 2
+        </button>
+        <button class="lobby-btn game-fc" data-room="fc">
+          <img src="/icon/fc26.png" class="val" />FC 26
+        </button>
+        <button class="lobby-btn game-arc" data-room="arc">
+          <img src="/icon/arc.png" class="val" />ARC Raiders
+        </button>
       </div>
+
       <ul class="messages"></ul>
       <div class="input">
         <input type="text" id="msgInput" placeholder="Mesaj yaz..." />
