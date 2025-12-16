@@ -1,79 +1,127 @@
-// Socket.IO yüklenmemişse (server üzerinden açılmıyorsa) script kırılmasın:
-if (typeof io === "undefined") {
-  console.error("Socket.IO bulunamadı. Sayfayı node server üzerinden aç: http://localhost:3000");
-  alert("Sunucu bağlantısı yok! Sayfayı http://localhost:3000 üzerinden açmalısın.");
-}
-
-const socket = typeof io !== "undefined" ? io() : null;
+const socket = io();
 
 // HTML Elementleri
 const loginModal = document.getElementById("loginModal");
 const usernameInput = document.getElementById("usernameInput");
-const loginBtn = document.getElementById("loginBtn");
-const registerBtn = document.getElementById("registerBtn");
-const chatContainer = document.getElementById("chatContainer");
+const passwordInput = document.getElementById("passwordInput");
+const passGroup = document.getElementById("passGroup");
+const mainActionBtn = document.getElementById("mainActionBtn"); // Giriş/Kayıt Butonu
+const toggleModeBtn = document.getElementById("toggleModeBtn"); // Mod Değiştirme Butonu
+const formTitle = document.getElementById("formTitle");
+const loginError = document.getElementById("loginError");
 
+const chatContainer = document.getElementById("chatContainer");
 const msgInput = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
 const messagesUl = document.querySelector(".messages");
 const lobbyBtns = document.querySelectorAll(".lobby-btn");
 
 let myUsername = "";
-let currentRoom = "genel";
-const userStatusMap = {}; // Kim online, kim offline haritası
+let currentRoom = "genel"; 
+let isRegisterMode = false; // Şuan Kayıt modunda mıyız?
 
-/* ---------- 1. GİRİŞ / KAYIT İŞLEMLERİ ---------- */
-function doLogin() {
-  const name = usernameInput.value.trim();
-  if (!name) return;
+const userStatusMap = {}; // Kim online, kim offline
 
-  myUsername = name;
+/* ---------- 1. GİRİŞ / KAYIT UI MANTIĞI ---------- */
 
-  if (!socket) {
-    alert("Sunucu bağlantısı yok. Lütfen http://localhost:3000 üzerinden aç.");
+// Modlar arasında geçiş (Giriş Yap <-> Kayıt Ol)
+function switchMode() {
+  isRegisterMode = !isRegisterMode;
+  loginError.style.display = "none"; // Hata varsa gizle
+  usernameInput.value = "";
+  passwordInput.value = "";
+
+  if (isRegisterMode) {
+    // Kayıt Modu Görünümü
+    formTitle.textContent = "Yeni Hesap Oluştur";
+    passGroup.style.display = "block"; // Şifreyi göster
+    mainActionBtn.textContent = "Kayıt Ol ve Gir ➤";
+    mainActionBtn.style.background = "#19e5ff"; // Mavi tonu
+    toggleModeBtn.textContent = "Zaten hesabın var mı? Giriş Yap";
+  } else {
+    // Giriş Modu Görünümü
+    formTitle.textContent = "Anında Bağlan, Hemen Oyna.";
+    passGroup.style.display = "none"; // Şifreyi (opsiyonel) gizle ama biz basitlik olsun diye login'de şifre istemeyeceğiz ya da isteyeceğiz
+    // NOT: Kullanıcı "Kayıt Ol" butonu çalışmıyor dediği için Login'de de şifre soralım ki anlamı olsun.
+    passGroup.style.display = "block"; 
+    
+    mainActionBtn.textContent = "Giriş Yap ➤";
+    mainActionBtn.style.background = "#22e56f"; // Yeşil tonu
+    toggleModeBtn.textContent = "Kayıt Ol";
+  }
+}
+
+// Butona tıklayınca mod değiştir
+toggleModeBtn.addEventListener("click", switchMode);
+
+// Ana Butona (Giriş/Kayıt) Tıklama
+function handleAuth() {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  
+  if (!username) {
+    showError("Lütfen kullanıcı adı gir.");
+    return;
+  }
+  
+  // Eğer Kayıt modundaysak veya Giriş modunda şifre girilmişse
+  if (isRegisterMode && !password) {
+    showError("Kayıt olmak için şifre belirlemelisin.");
     return;
   }
 
-  socket.emit("setUsername", myUsername);
-
-  loginModal.classList.add("hidden");
-  chatContainer.classList.remove("blur");
-  msgInput.focus();
+  // Sunucuya isteği gönder
+  const action = isRegisterMode ? "register" : "login";
+  socket.emit("authRequest", { action, username, password });
 }
 
-loginBtn.addEventListener("click", doLogin);
+function showError(msg) {
+  loginError.textContent = msg;
+  loginError.style.display = "block";
+}
 
-// ✅ KAYIT OL butonu artık çalışıyor (şimdilik login gibi davranıyor)
-registerBtn.addEventListener("click", doLogin);
-
+mainActionBtn.addEventListener("click", handleAuth);
+passwordInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") handleAuth();
+});
 usernameInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") doLogin();
+  // Giriş modunda şifre girmeden enter'a basarsa şifreye odaklansın
+  if (e.key === "Enter") passwordInput.focus();
 });
 
-/* ---------- 2. ODA DEĞİŞTİRME ---------- */
+/* ---------- 2. SUNUCUDAN GELEN AUTH CEVAPLARI ---------- */
+
+socket.on("authResponse", (data) => {
+  if (data.success) {
+    // Başarılı Giriş/Kayıt
+    myUsername = data.username;
+    loginModal.classList.add("hidden");
+    chatContainer.classList.remove("blur");
+    msgInput.focus();
+  } else {
+    // Hata (Yanlış şifre vb.)
+    showError(data.message);
+  }
+});
+
+/* ---------- 3. ODA DEĞİŞTİRME ---------- */
 lobbyBtns.forEach((btn) => {
   btn.addEventListener("click", () => {
     const roomName = btn.dataset.room;
     if (roomName === currentRoom) return;
 
-    // Aktif butonu değiştir
     document.querySelector(".lobby-btn.active").classList.remove("active");
     btn.classList.add("active");
-
-    // Ekranı temizle
     messagesUl.innerHTML = "";
-
-    // Odaya geç
     currentRoom = roomName;
-    if (socket) socket.emit("joinRoom", currentRoom);
+    socket.emit("joinRoom", currentRoom);
   });
 });
 
-/* ---------- 3. MESAJ GÖNDERME ---------- */
+/* ---------- 4. MESAJ GÖNDERME ---------- */
 function sendMessage() {
   const text = msgInput.value.trim();
   if (!text || !myUsername) return;
-  if (!socket) return;
 
   const time = new Date().toLocaleTimeString("tr-TR", {
     hour: "2-digit",
@@ -91,56 +139,46 @@ msgInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendMessage();
 });
 
-/* ---------- 4. SUNUCUDAN GELENLER ---------- */
-if (socket) {
-  // Yeni Mesaj Geldiğinde
-  socket.on("newMessage", (msg) => {
+/* ---------- 5. SOHBET OLAYLARI ---------- */
+
+socket.on("newMessage", (msg) => {
+  addMessage(msg.username, msg.text, msg.time);
+});
+
+socket.on("loadHistory", (messages) => {
+  messagesUl.innerHTML = "";
+  messages.forEach((msg) => {
     addMessage(msg.username, msg.text, msg.time);
   });
+  scrollToBottom();
+});
 
-  // Eski Mesajlar Yüklendiğinde
-  socket.on("loadHistory", (messages) => {
-    messagesUl.innerHTML = "";
-    (messages || []).forEach((msg) => {
-      addMessage(msg.username, msg.text, msg.time);
-    });
-    scrollToBottom();
-  });
+socket.on("userStatus", ({ username, online }) => {
+  userStatusMap[username] = online ? "online" : "offline";
+  updateAllUserStatuses();
+});
 
-  // Birisi Durum Değiştirdiğinde (Girdi/Çıktı)
-  socket.on("userStatus", ({ username, online }) => {
-    userStatusMap[username] = online ? "online" : "offline";
-    updateAllUserStatuses();
+socket.on("activeUsersList", (usersArray) => {
+  usersArray.forEach(u => {
+    userStatusMap[u] = "online";
   });
-
-  // Siteye İlk Girince Aktif Kullanıcı Listesini Al
-  socket.on("activeUsersList", (usersArray) => {
-    (usersArray || []).forEach((u) => {
-      userStatusMap[u] = "online";
-    });
-    updateAllUserStatuses();
-  });
-}
+  updateAllUserStatuses();
+});
 
 /* ---------- YARDIMCI FONKSİYONLAR ---------- */
+
 function addMessage(username, text, time) {
   const li = document.createElement("li");
   li.classList.add("message");
-
   if (username === myUsername) li.classList.add("mine");
-
   li.dataset.username = username;
 
   const header = document.createElement("div");
   header.classList.add("message-header");
 
-  // Durum Noktası (Dot)
   const dot = document.createElement("span");
   dot.classList.add("status-dot");
-
-  if (userStatusMap[username] !== "online") {
-    dot.classList.add("offline");
-  }
+  if (userStatusMap[username] !== "online") dot.classList.add("offline");
 
   const sender = document.createElement("span");
   sender.classList.add("sender");
@@ -148,7 +186,7 @@ function addMessage(username, text, time) {
 
   const date = document.createElement("span");
   date.classList.add("date");
-  date.textContent = time || "";
+  date.textContent = time;
 
   header.appendChild(dot);
   header.appendChild(sender);
@@ -167,12 +205,9 @@ function addMessage(username, text, time) {
 
 function updateAllUserStatuses() {
   const allMessages = document.querySelectorAll("li.message");
-  allMessages.forEach((li) => {
+  allMessages.forEach(li => {
     const uName = li.dataset.username;
     const dot = li.querySelector(".status-dot");
-
-    if (!dot) return;
-
     if (userStatusMap[uName] === "online") {
       dot.classList.remove("offline");
     } else {
