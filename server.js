@@ -1,119 +1,142 @@
 const express = require("express");
 const http = require("http");
-const path = require("path");
-const fs = require("fs");
-
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: {
+    origin: "*"
+  }
 });
 
-// --------------------
-// STATİK DOSYA SERVİSİ
-// --------------------
-// 1) Proje kökünü servis et (senin yüklediğin dosyalar kökte)
-app.use(express.static(__dirname));
+// Statik dosyalar
+app.use(express.static(__dirname + "/public"));
 
-// 2) Eğer /public klasörü varsa onu da servis et (eski yapıyı da desteklesin)
-const publicDir = path.join(__dirname, "public");
-if (fs.existsSync(publicDir)) {
-  app.use(express.static(publicDir));
-}
-
-// Ana sayfa: duo.html nerede varsa onu gönder
 app.get("/", (req, res) => {
-  const rootHtml = path.join(__dirname, "duo.html");
-  const publicHtml = path.join(publicDir, "duo.html");
-
-  if (fs.existsSync(rootHtml)) return res.sendFile(rootHtml);
-  if (fs.existsSync(publicHtml)) return res.sendFile(publicHtml);
-
-  return res.status(404).send("duo.html bulunamadı. Kök dizine veya /public içine koy.");
+  res.sendFile(__dirname + "/public/duo.html");
 });
 
 // --- VERİ HAVUZU ---
-const users = new Map(); // Kullanıcı Adı -> Bağlantı Sayısı
-const roomMessages = {}; // Oda Adı -> Mesajlar Dizisi []
+const activeConnections = new Map(); // Kullanıcı Adı -> Bağlantı Sayısı
+const roomMessages = {}; // Oda Adı -> Mesajlar []
+
+// Basit Kullanıcı Veritabanı (RAM üzerinde tutulur, sunucu kapanınca sıfırlanır)
+// Gerçek projede MongoDB veya SQL kullanılmalıdır.
+const registeredUsers = {}; // { "ahmet": "1234", "mehmet": "abc" }
 
 io.on("connection", (socket) => {
-  console.log("Bir kullanıcı bağlandı");
-
-  let username = null;
-  let currentRoom = "genel"; // Varsayılan oda
+  console.log("Bir kullanıcı bağlandı: " + socket.id);
+  
+  let currentUser = null;
+  let currentRoom = "genel";
   socket.join("genel");
 
-  // 1. KULLANICI GİRİŞ YAPTIĞINDA
-  socket.on("setUsername", (name) => {
-    if (!name) return;
-    username = name.trim();
-    if (!username) return;
+  // 1. KİMLİK DOĞRULAMA (Giriş veya Kayıt)
+  socket.on("authRequest", ({ action, username, password }) => {
+    const safeUser = username.trim();
+    
+    // Basit Validasyonlar
+    if (!safeUser || safeUser.length < 3) {
+      socket.emit("authResponse", { success: false, message: "Kullanıcı adı en az 3 karakter olmalı." });
+      return;
+    }
 
-    // Kullanıcıyı kaydet
-    const count = users.get(username) || 0;
-    users.set(username, count + 1);
-
-    // A) Herkese "Bu kişi ONLINE oldu" de
-    io.emit("userStatus", { username, online: true });
-
-    // B) Yeni giren kişiye aktif kullanıcı listesi
-    const onlineUsersList = Array.from(users.keys());
-    socket.emit("activeUsersList", onlineUsersList);
-
-    // C) Girdiği odanın (genel) geçmiş mesajlarını yükle
-    if (roomMessages["genel"]) {
-      socket.emit("loadHistory", roomMessages["genel"]);
+    if (action === "register") {
+      // --- KAYIT OLMA ---
+      if (registeredUsers[safeUser]) {
+        socket.emit("authResponse", { success: false, message: "Bu kullanıcı adı zaten alınmış." });
+      } else {
+        registeredUsers[safeUser] = password; // Kaydet
+        loginSuccess(socket, safeUser);
+      }
+    } else {
+      // --- GİRİŞ YAPMA ---
+      // Kullanıcı kayıtlı mı?
+      if (!registeredUsers[safeUser]) {
+        // Kayıtlı değilse bile "Misafir" gibi girmesine izin verelim mi? 
+        // Yoksa hata mı verelim? Kullanıcı "Kayıt Butonu" istediği için
+        // artık sadece kayıtlılar girebilsin diyebiliriz.
+        // Veya kayıtlı değilse "Böyle bir kullanıcı yok" diyelim.
+        socket.emit("authResponse", { success: false, message: "Kullanıcı bulunamadı. Önce kayıt ol." });
+      } else {
+        // Şifre kontrolü
+        if (registeredUsers[safeUser] === password) {
+          loginSuccess(socket, safeUser);
+        } else {
+          socket.emit("authResponse", { success: false, message: "Hatalı şifre!" });
+        }
+      }
     }
   });
 
+  // Giriş Başarılı Olduğunda Çalışacak Ortak Fonksiyon
+  function loginSuccess(socket, username) {
+    currentUser = username;
+    
+    // İstemciye başarili bilgisini don
+    socket.emit("authResponse", { success: true, username: currentUser });
+
+    // Aktif sayısını güncelle
+    const count = activeConnections.get(currentUser) || 0;
+    activeConnections.set(currentUser, count + 1);
+
+    // Herkese Online bilgisini yay
+    io.emit("userStatus", { username: currentUser, online: true });
+
+    // Yeni girene aktifleri yolla
+    const onlineUsersList = Array.from(activeConnections.keys());
+    socket.emit("activeUsersList", onlineUsersList);
+
+    // Geçmiş mesajları yükle
+    if (roomMessages["genel"]) {
+      socket.emit("loadHistory", roomMessages["genel"]);
+    }
+  }
+
   // 2. ODA DEĞİŞTİRME
   socket.on("joinRoom", (roomName) => {
+    if (!currentUser) return; // Giriş yapmamışsa işlem yapma
+    
     socket.leave(currentRoom);
     socket.join(roomName);
     currentRoom = roomName;
 
-    // Odanın geçmiş mesajlarını sadece bu kullanıcıya gönder
     if (roomMessages[roomName]) {
       socket.emit("loadHistory", roomMessages[roomName]);
-    } else {
-      socket.emit("loadHistory", []);
     }
   });
 
   // 3. MESAJ GÖNDERME
   socket.on("sendMessage", (data) => {
-    if (!username) return;
-    const { text, time } = data || {};
-    if (!text) return;
+    if (!currentUser) return;
+    const { text, time } = data;
+    const msg = { username: currentUser, text, time };
 
-    const msg = { username, text, time };
-
-    // Mesajı sunucu hafızasına kaydet (Geçmiş için)
-    if (!roomMessages[currentRoom]) roomMessages[currentRoom] = [];
+    if (!roomMessages[currentRoom]) {
+      roomMessages[currentRoom] = [];
+    }
     roomMessages[currentRoom].push(msg);
 
-    // Son 50 mesajı tut, fazlasını sil
     if (roomMessages[currentRoom].length > 50) {
       roomMessages[currentRoom].shift();
     }
 
-    // Mesajı o odadakilere gönder
     io.to(currentRoom).emit("newMessage", msg);
   });
 
   // 4. ÇIKIŞ YAPMA
   socket.on("disconnect", () => {
-    if (!username) return;
+    if (!currentUser) return;
 
-    const count = users.get(username) || 0;
+    const count = activeConnections.get(currentUser) || 0;
     if (count <= 1) {
-      users.delete(username);
-      io.emit("userStatus", { username, online: false });
+      activeConnections.delete(currentUser);
+      io.emit("userStatus", { username: currentUser, online: false });
     } else {
-      users.set(username, count - 1);
+      activeConnections.set(currentUser, count - 1);
     }
+    console.log("Kullanıcı ayrıldı: " + currentUser);
   });
 });
 
