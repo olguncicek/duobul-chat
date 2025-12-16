@@ -4,6 +4,7 @@ const socket = io();
 const loginModal = document.getElementById("loginModal");
 const usernameInput = document.getElementById("usernameInput");
 const loginBtn = document.getElementById("loginBtn");
+const registerBtn = document.getElementById("registerBtn");
 const chatContainer = document.getElementById("chatContainer");
 
 const msgInput = document.getElementById("msgInput");
@@ -29,6 +30,7 @@ function doLogin() {
 }
 
 loginBtn.addEventListener("click", doLogin);
+registerBtn.addEventListener("click", doLogin);
 usernameInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") doLogin();
 });
