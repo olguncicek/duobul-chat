@@ -1,20 +1,37 @@
 const express = require("express");
 const http = require("http");
+const path = require("path");
+const fs = require("fs");
+
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 
 const io = new Server(server, {
-  cors: {
-    origin: "*"
-  }
+  cors: { origin: "*" }
 });
 
-// Statik dosyaları sun
-app.use(express.static(__dirname + "/public"));
+// --------------------
+// STATİK DOSYA SERVİSİ
+// --------------------
+// 1) Proje kökünü servis et (senin yüklediğin dosyalar kökte)
+app.use(express.static(__dirname));
 
+// 2) Eğer /public klasörü varsa onu da servis et (eski yapıyı da desteklesin)
+const publicDir = path.join(__dirname, "public");
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+}
+
+// Ana sayfa: duo.html nerede varsa onu gönder
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/duo.html");
+  const rootHtml = path.join(__dirname, "duo.html");
+  const publicHtml = path.join(publicDir, "duo.html");
+
+  if (fs.existsSync(rootHtml)) return res.sendFile(rootHtml);
+  if (fs.existsSync(publicHtml)) return res.sendFile(publicHtml);
+
+  return res.status(404).send("duo.html bulunamadı. Kök dizine veya /public içine koy.");
 });
 
 // --- VERİ HAVUZU ---
@@ -23,7 +40,7 @@ const roomMessages = {}; // Oda Adı -> Mesajlar Dizisi []
 
 io.on("connection", (socket) => {
   console.log("Bir kullanıcı bağlandı");
-  
+
   let username = null;
   let currentRoom = "genel"; // Varsayılan oda
   socket.join("genel");
@@ -41,7 +58,7 @@ io.on("connection", (socket) => {
     // A) Herkese "Bu kişi ONLINE oldu" de
     io.emit("userStatus", { username, online: true });
 
-    // B) [YENİ] Yeni giren kişiye "Şu an içeride bunlar var" listesini gönder
+    // B) Yeni giren kişiye aktif kullanıcı listesi
     const onlineUsersList = Array.from(users.keys());
     socket.emit("activeUsersList", onlineUsersList);
 
@@ -60,20 +77,21 @@ io.on("connection", (socket) => {
     // Odanın geçmiş mesajlarını sadece bu kullanıcıya gönder
     if (roomMessages[roomName]) {
       socket.emit("loadHistory", roomMessages[roomName]);
+    } else {
+      socket.emit("loadHistory", []);
     }
   });
 
   // 3. MESAJ GÖNDERME
   socket.on("sendMessage", (data) => {
     if (!username) return;
-    const { text, time } = data;
+    const { text, time } = data || {};
+    if (!text) return;
 
     const msg = { username, text, time };
 
     // Mesajı sunucu hafızasına kaydet (Geçmiş için)
-    if (!roomMessages[currentRoom]) {
-      roomMessages[currentRoom] = [];
-    }
+    if (!roomMessages[currentRoom]) roomMessages[currentRoom] = [];
     roomMessages[currentRoom].push(msg);
 
     // Son 50 mesajı tut, fazlasını sil
@@ -92,7 +110,6 @@ io.on("connection", (socket) => {
     const count = users.get(username) || 0;
     if (count <= 1) {
       users.delete(username);
-      // Herkese "Bu kişi OFFLINE oldu" de
       io.emit("userStatus", { username, online: false });
     } else {
       users.set(username, count - 1);
