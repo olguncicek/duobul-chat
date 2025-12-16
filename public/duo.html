@@ -11,7 +11,6 @@
     />
   </head>
   <body>
-    <!-- Giriş ekranı -->
     <div id="loginModal" class="login-modal">
       <div class="login-card">
         <div class="logo-area">
@@ -21,7 +20,7 @@
             <div class="logo-subtitle">OYUNCU ARKADAŞINI BUL</div>
           </div>
         </div>
-        <p class="login-tagline">Anında Bağlan, Hemen Oyna.</p>
+        <p class="login-tagline" id="formTitle">Anında Bağlan, Hemen Oyna.</p>
 
         <div class="login-input-group">
           <input
@@ -29,38 +28,50 @@
             type="text"
             id="usernameInput"
             placeholder="Kullanıcı Adı Gir..."
+            autocomplete="off"
           />
         </div>
-        <button id="loginBtn" class="login-button">Giriş Yap ➤</button>
-        <button id="registerBtn" class="register-button">Kayıt Ol</button>
+
+        <div class="login-input-group" id="passGroup" style="display: none;">
+          <input
+            class="input-border"
+            type="password"
+            id="passwordInput"
+            placeholder="Şifre Gir..."
+          />
+        </div>
+
+        <button id="mainActionBtn" class="login-button">Giriş Yap ➤</button>
+        <button id="toggleModeBtn" class="register-button">Kayıt Ol</button>
+        
+        <p id="loginError" style="color: #ff4655; font-size: 13px; margin-top: 10px; display: none; text-align: center;"></p>
       </div>
     </div>
 
-    <!-- Sohbet kutusu -->
     <div class="chat-container blur" id="chatContainer">
       <h2>Sohbet</h2>
       <div class="lobbies">
         <button class="lobby-btn active" data-room="genel">Genel</button>
         <button class="lobby-btn game-val" data-room="val">
-          <img src="/icon/valo.png" class="val" />Valorant
+          <img src="/icon/valo.png" class="val" onerror="this.style.display='none'" />Valorant
         </button>
         <button class="lobby-btn game-lol" data-room="lol">
-          <img src="/icon/lol.png" class="val" />LoL
+          <img src="/icon/lol.png" class="val" onerror="this.style.display='none'" />LoL
         </button>
         <button class="lobby-btn game-cs" data-room="cs">
-          <img src="/icon/cs22.png" class="val" />CS 2
+          <img src="/icon/cs22.png" class="val" onerror="this.style.display='none'" />CS 2
         </button>
         <button class="lobby-btn game-fc" data-room="fc">
-          <img src="/icon/fc26.png" class="val" />FC 26
+          <img src="/icon/fc26.png" class="val" onerror="this.style.display='none'" />FC 26
         </button>
         <button class="lobby-btn game-arc" data-room="arc">
-          <img src="/icon/arc.png" class="val" />ARC Raiders
+          <img src="/icon/arc.png" class="val" onerror="this.style.display='none'" />ARC Raiders
         </button>
       </div>
 
       <ul class="messages"></ul>
       <div class="input">
-        <input type="text" id="msgInput" placeholder="Mesaj yaz..." />
+        <input type="text" id="msgInput" placeholder="Mesaj yaz..." autocomplete="off" />
         <button id="sendBtn">➤</button>
       </div>
     </div>
