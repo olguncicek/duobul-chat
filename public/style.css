@@ -12,7 +12,8 @@ body {
   align-items: center;
   justify-content: center;
   color: #fff;
-  background: url("image/wp.jpg") no-repeat center center fixed;
+  /* Resmi bulamazsa siyah kalsın diye fallback ekledim */
+  background: #10131a url("image/wp.jpg") no-repeat center center fixed;
   background-size: cover;
   margin: 0;
   padding: 0;
@@ -29,8 +30,11 @@ body {
 .login-modal {
   position: fixed;
   inset: 0;
-  background: url("image/i.jpg") no-repeat center center;
-  background-size: cover; /* Resmi ekrana tam sığdırır */
+  background: rgba(0,0,0,0.6); /* Arka plan resmi yoksa karartma */
+  background-image: url("image/i.jpg"); 
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -87,6 +91,7 @@ body {
   margin-bottom: 18px;
   font-size: 14px;
   color: #cbd5f5;
+  transition: color 0.3s;
 }
 
 .login-input-group {
@@ -100,6 +105,7 @@ body {
   border: 3px solid #343b48;
   background: #0f141b;
   color: white;
+  transition: all 0.2s;
 }
 .login-input-group input:focus {
   border: 3px solid #22e56f;
@@ -129,21 +135,21 @@ body {
   transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.1s ease;
 }
 
-
 .login-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 16px 40px rgba(34, 229, 111, 0.48);
   background: #26f377;
 }
+
 /* Kayıt Ol Butonu */
 .register-button {
   width: 100%;
   padding: 10px 0;
-  margin-top: 12px; /* Giriş butonuyla arasına boşluk */
-  border: 2px solid #343b48; /* Koyu gri çerçeve */
+  margin-top: 12px;
+  border: 2px solid #343b48;
   border-radius: 12px;
-  background: transparent; /* Arka plan şeffaf */
-  color: #9ba4b4; /* Yazı rengi gri */
+  background: transparent;
+  color: #9ba4b4;
   font-weight: 700;
   font-size: 15px;
   cursor: pointer;
@@ -151,15 +157,16 @@ body {
 }
 
 .register-button:hover {
-  border-color: #22e56f; /* Üzerine gelince yeşil çerçeve */
-  color: #fff; /* Yazı beyazlaşır */
-  background: rgba(34, 229, 111, 0.1); /* Hafif yeşil arka plan */
+  border-color: #22e56f;
+  color: #fff;
+  background: rgba(34, 229, 111, 0.1);
   transform: translateY(-1px);
 }
+
 /* Sohbet kutusu */
 .chat-container {
-  width: 80%; /* 75% → 90% yap */
-  max-width: 1200px; /* 1100px → 1400px yap */
+  width: 90%; 
+  max-width: 1400px;
   height: 85vh;
   margin: 40px auto;
   background: rgba(26, 33, 44, 0.95);
@@ -191,7 +198,6 @@ ul.messages {
   gap: 8px;
 }
 
-/* Mesaj balonu */
 ul.messages li.message {
   background: #161f29;
   padding: 7px 10px 8px;
@@ -209,7 +215,7 @@ ul.messages li.message.mine {
   border-top-right-radius: 4px;
 }
 
-/* Üst bilgi satırı */
+/* Mesaj Header */
 .message-header {
   display: flex;
   align-items: center;
@@ -245,10 +251,10 @@ ul.messages li.message.mine {
   color: #97a2b8;
 }
 
-/* Mesaj metni */
 .text {
   font-size: 13px;
   line-height: 1.3rem;
+  word-wrap: break-word; /* Uzun kelimelerde taşmayı önle */
 }
 
 /* Alt input alanı */
@@ -295,14 +301,14 @@ ul.messages li.message.mine {
   box-shadow: 0 11px 30px rgba(34, 229, 111, 0.55);
 }
 
-/* --- LOBİ BUTONLARI --- */
+/* LOBİ BUTONLARI */
 .lobbies {
   display: flex;
   gap: 10px;
   padding: 10px 14px;
   background: #131921;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  overflow-x: auto; /* Mobilde yana kaydırma */
+  overflow-x: auto;
   flex-shrink: 0;
 }
 
@@ -312,115 +318,80 @@ ul.messages li.message.mine {
   color: #9ba4b4;
   padding: 12px 24px;
   border-radius: 15px;
-  font-size: 16x;
+  font-size: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
   display: flex;
   align-items: center;
-  justify-content: center; /* İçeriği ortalar */
+  justify-content: center;
   gap: 12px;
-  font-weight: 600; /* Yazı biraz daha kalın */
+  font-weight: 600;
   height: 50px;
 }
 
 .lobby-btn:hover {
   background: #283442;
   color: #fff;
-  transform: translateY(-2px); /* Hafif yukarı kalkma efekti */
+  transform: translateY(-2px);
 }
 
 .lobby-btn img {
   width: 28px !important;
   height: 28px !important;
-  object-fit: contain; /* Resmi bozmadan sığdır */
+  object-fit: contain;
   display: block;
-  background: transparent !important;
-  border: none;
 }
 
-/* GENEL  */
 .lobby-btn.active {
-  background: transparent; /* Canlı bir gökyüzü mavisi */
+  background: transparent;
   border-color: #09577e;
-  border: 3px solid #09577e;
   color: #fff;
-  box-shadow: 0 0 15px rgba(0, 168, 255, 0.45); /* Mavi parlama */
-  font-weight: 700;
+  box-shadow: 0 0 15px rgba(0, 168, 255, 0.45);
 }
 
 .lobby-btn.game-val.active {
-  background: transparent;
   border-color: #ff4655;
-  color: #fff;
   box-shadow: 0 0 15px rgba(255, 70, 85, 0.4);
 }
 
-/* League of Legends (Mavi/Hextech) */
 .lobby-btn.game-lol.active {
-  background: transparent;
   border-color: #0ac8b9;
-  color: #fff;
   box-shadow: 0 0 15px rgba(10, 200, 185, 0.4);
 }
 
-/* CS2 (Turuncu) */
 .lobby-btn.game-cs.active {
-  background: transparent;
   border-color: #de9b35;
-  color: #fff;
   box-shadow: 0 0 15px rgba(222, 155, 53, 0.4);
 }
 
-/* --- YENİ OYUN RENKLERİ --- */
-
-/* EA Sports FC (İkonik Neon Yeşil) */
 .lobby-btn.game-fc.active {
-  background: transparent; /* FC markasının resmi üçgen yeşili */
   border-color: #15f563;
-  color: #fff; /* Yazı koyu olsun ki okunsun */
   box-shadow: 0 0 15px rgba(21, 245, 99, 0.4);
 }
 
-/* ARC Raiders (Retro Sci-Fi Turuncu/Kırmızı) */
 .lobby-btn.game-arc.active {
-  background: transparent; /* Uyarı tonunda canlı bir kırmızı-turuncu */
   border-color: #ff3f1a;
-  color: #fff;
   box-shadow: 0 0 15px rgba(255, 63, 26, 0.5);
 }
-/* --- MODERN KAYDIRMA ÇUBUĞU (SCROLLBAR) --- */
 
-/* Mesaj kutusu ve lobiler için */
+/* Scrollbar */
 ul.messages::-webkit-scrollbar,
 .lobbies::-webkit-scrollbar {
-  width: 8px; /* Dikey çubuk genişliği */
-  height: 8px; /* Yatay çubuk yüksekliği */
+  width: 8px;
+  height: 8px;
 }
-
-/* Çubuğun arka plan yolu */
 ul.messages::-webkit-scrollbar-track,
 .lobbies::-webkit-scrollbar-track {
   background: #0f141a;
   border-radius: 4px;
 }
-
-/* Hareket eden çubuk kısmı */
 ul.messages::-webkit-scrollbar-thumb,
 .lobbies::-webkit-scrollbar-thumb {
   background: #343b48;
   border-radius: 4px;
 }
-
-/* Üzerine gelince rengi değişsin */
 ul.messages::-webkit-scrollbar-thumb:hover,
 .lobbies::-webkit-scrollbar-thumb:hover {
-  background: #22e56f; /* Tema rengin */
-}
-
-.val {
-  object-fit: contain; /* Resmi bozmadan sığdır */
-  display: block;
-  background: transparent !important;
-  border: none;
+  background: #22e56f;
 }
